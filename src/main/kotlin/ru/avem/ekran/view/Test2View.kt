@@ -64,7 +64,7 @@ class Test2View : View("Сопротивление изоляции") {
                 mouseTransparentProperty().set(true)
 
                 column("", TableValuesTest2::descriptor.getter)
-                column("Сопротивление, Ом", TableValuesTest2::resistanceR.getter)
+                column("Сопротивление, МОм", TableValuesTest2::resistanceR.getter)
                 column("Результат", TableValuesTest2::result.getter)
             }
 

@@ -67,7 +67,7 @@ class M4122Controller(
                     val response = sendRequest(byteArrayOf(0x55), responseSize = 2)
                     when {
                         0x67 in response -> {
-                            return -1 //TODO возможно обрыв
+                            return -2 //TODO возможно обрыв
                         }
                         0x5B in response -> {
                             val values = sendRequest(byteArrayOf(0x5C, 0x55), responseSize = 12)

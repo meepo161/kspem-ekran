@@ -4,12 +4,12 @@ import javafx.application.Platform
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.text.Text
 import ru.avem.ekran.communication.model.CommunicationModel
+import ru.avem.ekran.communication.model.devices.bris.m4122.M4122Controller
 import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
 import ru.avem.ekran.entities.TableValuesTest2
 import ru.avem.ekran.utils.LogTag
 import ru.avem.ekran.utils.Singleton.currentTestItem
 import ru.avem.ekran.utils.State
-import ru.avem.ekran.utils.formatRealNumber
 import ru.avem.ekran.utils.sleep
 import ru.avem.ekran.view.MainView
 import ru.avem.ekran.view.Test2View
@@ -55,22 +55,10 @@ class Test2Controller : TestController() {
     private var ikasReadyParam: Float = 0f
 
     @Volatile
-    private var measuringL:  Double = 0.0
+    private var measuringR: Double = 0.0
 
     @Volatile
     private var testItemR: Double = 0.0
-
-    @Volatile
-    private var measuringL1: Double = 0.0
-
-    @Volatile
-    private var measuringL2: Double = 0.0
-
-    @Volatile
-    private var measuringL3: Double = 0.0
-
-    @Volatile
-    private var openContact = true
 
     @Volatile
     private var currentVIU: Boolean = false
@@ -171,19 +159,17 @@ class Test2Controller : TestController() {
                 setCause("Не закрыта крышка платформы 2")
             }
         }
-
     }
 
     fun startTest() {
         testItemR = currentTestItem.resistanceCoil.toDouble()
-        thread {
+        thread(isDaemon = true) {
             Platform.runLater {
                 view.buttonBack.isDisable = true
                 view.buttonStartStopTest.text = "Остановить"
                 view.buttonNextTest.isDisable = true
             }
 
-            startPollDevices()
             isExperimentRunning = true
             isExperimentEnded = false
             clearLog()
@@ -199,7 +185,18 @@ class Test2Controller : TestController() {
             }
 
             if (isExperimentRunning) {
+                CommunicationModel.addWritingRegister(
+                    CommunicationModel.DeviceID.DD2,
+                    OwenPrModel.RESET_DOG,
+                    1.toShort()
+                )
+                CommunicationModel.addWritingRegister(
+                    CommunicationModel.DeviceID.DD2,
+                    OwenPrModel.RESET_DOG,
+                    0.toShort()
+                )
                 owenPR.initOwenPR()
+                startPollDevices()
                 sleep(1000)
             }
 
@@ -211,25 +208,26 @@ class Test2Controller : TestController() {
             if (isExperimentRunning) {
                 appendMessageToLog(LogTag.DEBUG, "Подготовка стенда")
                 appendMessageToLog(LogTag.DEBUG, "Сбор схемы")
-                sleep(2000)
+                appendMessageToLog(LogTag.DEBUG, "Подключение контакторов для измерения R")
 
                 if (mainView.comboBoxPlatform.selectionModel.selectedItem == "Платформа 1") {
-                    owenPR.onKM11()
+                    owenPR.onKM41()
                 } else if (mainView.comboBoxPlatform.selectionModel.selectedItem == "Платформа 2") {
-                    owenPR.onKM12()
+                    owenPR.onKM42()
                 }
+                owenPR.onKM44()
             }
 
             if (isExperimentRunning) {
-                appendMessageToLog(LogTag.DEBUG, "Подключение контакторов для измерения R AB")
-                owenPR.onKM51()
-                owenPR.onKM53()
-                sleep(4000)
-            }
-
-            if (isExperimentRunning) {
-                measuringL = formatRealNumber(appa.getL().toDouble())
-                tableValues[1].resistanceR.value = measuringL.toString()
+                appendMessageToLog(LogTag.DEBUG, "Измерение R")
+                appendMessageToLog(LogTag.DEBUG, "Дождитесь завершения...")
+                measuringR =
+                    bris.setVoltageAndStartMeasuring(1000, M4122Controller.MeasuringType.RESISTANCE).toDouble() / 1000
+                if (measuringR == -2.0) {
+                    tableValues[1].resistanceR.value = "Обрыв"
+                } else {
+                    tableValues[1].resistanceR.value = measuringR.toString()
+                }
             }
 
             setResult()
@@ -251,7 +249,7 @@ class Test2Controller : TestController() {
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
         } else {
             tableValues[1].result.value = "Успешно"
-            appendMessageToLog(LogTag.ERROR, "Испытание завершено успешно")
+            appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")
         }
     }
 

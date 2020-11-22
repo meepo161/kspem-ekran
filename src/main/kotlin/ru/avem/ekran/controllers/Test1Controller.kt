@@ -286,7 +286,7 @@ class Test1Controller : TestController() {
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
         } else {
             tableValues[1].result.value = "Успешно"
-            appendMessageToLog(LogTag.ERROR, "Испытание завершено успешно")
+            appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")
         }
     }
 

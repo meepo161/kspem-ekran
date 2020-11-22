@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0"
+            prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ru.avem.ekran.communication.adapters.ack3002.driver.AAOPController">
+    <children>
+        <VBox fx:id="layoutBack" alignment="TOP_CENTER" layoutX="64.0" layoutY="14.0" prefHeight="400.0"
+              prefWidth="600.0" spacing="16.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0"
+              AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <children>
+                <HBox alignment="CENTER" spacing="32.0">
+                    <children>
+                        <Button fx:id="btnClose" mnemonicParsing="false" onAction="#handleBtnClose" prefHeight="60.0"
+                                prefWidth="60.0" text="Close"/>
+                        <Button fx:id="btnSave" layoutX="10.0" layoutY="10.0" mnemonicParsing="false"
+                                onAction="#handleBtnSave" prefHeight="60.0" prefWidth="60.0" text="Save"/>
+                        <Button fx:id="btnLoad" layoutX="62.0" layoutY="10.0" mnemonicParsing="false"
+                                onAction="#handleBtnLoad" prefHeight="60.0" prefWidth="60.0" text="Load"/>
+                        <Button fx:id="autosetBtn" layoutX="114.0" layoutY="10.0" mnemonicParsing="false"
+                                onAction="#handleBtnAutoSet" prefHeight="60.0" prefWidth="60.0" text="autoSet"/>
+                        <Button fx:id="btnHelp" layoutX="166.0" layoutY="10.0" mnemonicParsing="false"
+                                onAction="#handleBtnHelp" prefHeight="60.0" prefWidth="60.0" text="Help"/>
+                        <Button fx:id="btnOur" layoutX="438.0" layoutY="48.0" mnemonicParsing="false"
+                                onAction="#handleBtnOur" prefHeight="60.0" prefWidth="60.0" text="Our"/>
+                    </children>
+                </HBox>
+                <VBox fx:id="ctrlLayout" spacing="16.0">
+                    <children>
+                        <HBox alignment="CENTER" spacing="32.0">
+                            <children>
+                                <Label fx:id="Channel1Lbl" text="1"/>
+                                <ComboBox fx:id="range1Spinner" prefWidth="150.0"/>
+                                <ComboBox fx:id="cpl1Spinner" layoutX="239.0" layoutY="48.0" prefWidth="150.0"/>
+                                <ComboBox fx:id="probe1Spinner" layoutX="314.0" layoutY="48.0" prefWidth="150.0"/>
+                            </children>
+                        </HBox>
+                        <HBox alignment="CENTER" spacing="32.0">
+                            <children>
+                                <Label fx:id="Channel2Lbl" text="2"/>
+                                <ComboBox fx:id="range2Spinner" prefWidth="150.0"/>
+                                <ComboBox fx:id="cpl2Spinner" layoutX="239.0" layoutY="48.0" prefWidth="150.0"/>
+                                <ComboBox fx:id="probe2Spinner" layoutX="314.0" layoutY="48.0" prefWidth="150.0"/>
+                            </children>
+                        </HBox>
+                        <HBox alignment="CENTER" spacing="32.0">
+                            <children>
+                                <ComboBox fx:id="tbSpinner" prefWidth="150.0"/>
+                                <ComboBox fx:id="dataLenSpinner" layoutX="235.0" layoutY="48.0" prefWidth="150.0"/>
+                                <Slider fx:id="pretrgSeekBar"/>
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+                <HBox alignment="CENTER">
+                    <children>
+                        <Button fx:id="ctrlShowBtn" onAction="#handleCtrlShowBtn" mnemonicParsing="false"
+                                prefWidth="536.0" text="Control"/>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER" layoutX="42.0" layoutY="375.0" spacing="64.0">
+                    <children>
+                        <VBox alignment="CENTER" prefHeight="67.0" prefWidth="200.0" spacing="8.0">
+                            <children>
+                                <Label fx:id="freq1Txt" text="f1: --- Hz"/>
+                                <Label fx:id="amps1Txt" text="a1(sine): --- V"/>
+                                <Label fx:id="ampp1Txt" text="a1(puls): --- V"/>
+                            </children>
+                        </VBox>
+                        <VBox alignment="CENTER" layoutX="178.0" layoutY="10.0" prefHeight="67.0" prefWidth="200.0"
+                              spacing="8.0">
+                            <children>
+                                <Label fx:id="freq2Txt" text="f2: --- Hz"/>
+                                <Label fx:id="amps2Txt" text="a2(sine): --- V"/>
+                                <Label fx:id="ampp2Txt" text="a2(puls): --- V"/>
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT" layoutX="42.0" layoutY="365.0" spacing="16.0">
+                    <children>
+                        <ToggleButton fx:id="runBtn" mnemonicParsing="false" onAction="#handleRunBtn" text="Run"/>
+                        <ComboBox fx:id="runmodeSpinner" prefWidth="100.0"/>
+                        <ComboBox fx:id="trgsrcSpinner" layoutX="99.0" layoutY="10.0" prefWidth="100.0"/>
+                        <ComboBox fx:id="trglogSpinner" layoutX="249.0" layoutY="10.0" prefWidth="100.0"/>
+                        <ComboBox fx:id="generatorSpinner" layoutX="396.0" layoutY="10.0" prefWidth="100.0"/>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_LEFT">
+                    <children>
+                        <Label fx:id="tvScale" text="T: 10 µs/d; 1: 1 V/d; 2: 1 V/d"/>
+                    </children>
+                </HBox>
+                <HBox layoutX="42.0" layoutY="531.0" prefHeight="265.0" prefWidth="536.0">
+                    <children>
+                        <VBox fx:id="trglevelLayout" alignment="CENTER" prefHeight="200.0" prefWidth="100.0">
+                            <children>
+                                <Label text="T"/>
+                                <Slider fx:id="trglevelSeekBar" orientation="VERTICAL" prefHeight="220.0"
+                                        prefWidth="14.0"/>
+                            </children>
+                        </VBox>
+                        <LineChart>
+                            <xAxis>
+                                <CategoryAxis side="BOTTOM"/>
+                            </xAxis>
+                            <yAxis>
+                                <NumberAxis side="LEFT"/>
+                            </yAxis>
+                        </LineChart>
+                        <VBox fx:id="ofs1Layout" alignment="CENTER" layoutX="10.0" layoutY="10.0" prefHeight="200.0"
+                              prefWidth="100.0">
+                            <children>
+                                <Label text="1"/>
+                                <Slider fx:id="offset1SeekBar" orientation="VERTICAL" prefHeight="220.0"/>
+                            </children>
+                        </VBox>
+                        <VBox fx:id="ofs2Layout" alignment="CENTER" layoutX="110.0" layoutY="10.0" prefHeight="200.0"
+                              prefWidth="100.0">
+                            <children>
+                                <Label text="2"/>
+                                <Slider fx:id="offset2SeekBar" orientation="VERTICAL" prefHeight="220.0"/>
+                            </children>
+                        </VBox>
+                    </children>
+                </HBox>
+            </children>
+            <padding>
+                <Insets bottom="32.0" left="32.0" right="32.0" top="32.0"/>
+            </padding>
+        </VBox>
+    </children>
+</AnchorPane>

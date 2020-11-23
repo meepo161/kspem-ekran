@@ -5,10 +5,7 @@ import ru.avem.ekran.communication.adapters.utils.ModbusRegister
 import ru.avem.ekran.communication.model.DeviceRegister
 import ru.avem.ekran.communication.model.IDeviceController
 import ru.avem.ekran.communication.utils.TransportException
-import ru.avem.ekran.communication.utils.TypeByteOrder
-import ru.avem.ekran.communication.utils.allocateOrderedByteBuffer
 import ru.avem.ekran.utils.Log
-import ru.avem.ekran.utils.sleep
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.experimental.and
@@ -30,6 +27,7 @@ class OwenPrController(
     override val pollingMutex = Any()
 
     var outMask: Short = 0
+    var outMask2: Short = 0
 
     override fun readRegister(register: DeviceRegister) {
         isResponding = try {
@@ -103,18 +101,28 @@ class OwenPrController(
 
     override fun getRegisterById(idRegister: String) = model.getRegisterById(idRegister)
 
-    fun onBitInRegister(register: DeviceRegister, bitPosition: Short) {
+    private fun onBitInRegister(register: DeviceRegister, bitPosition: Short) {
         Log.i("onBitInRegister", Thread.currentThread().name)
         val nor = bitPosition - 1
-        outMask = outMask or 2.0.pow(nor).toInt().toShort()
-        writeRegister(register, outMask)
+        if (register.toString() == OwenPrModel.KMS1_REGISTER) {
+            outMask = outMask or 2.0.pow(nor).toInt().toShort()
+            writeRegister(register, outMask)
+        } else if (register.toString() == OwenPrModel.KMS2_REGISTER) {
+            outMask2 = outMask2 or 2.0.pow(nor).toInt().toShort()
+            writeRegister(register, outMask2)
         }
+    }
 
-    fun offBitInRegister(register: DeviceRegister, bitPosition: Short) {
+    private fun offBitInRegister(register: DeviceRegister, bitPosition: Short) {
         Log.i("offBitInRegister", Thread.currentThread().name)
         val nor = bitPosition - 1
-        outMask = outMask and 2.0.pow(nor).toInt().inv().toShort()
-        writeRegister(register, outMask)
+        if (register.toString() == OwenPrModel.KMS1_REGISTER) {
+            outMask = outMask and 2.0.pow(nor).toInt().inv().toShort()
+            writeRegister(register, outMask)
+        } else if (register.toString() == OwenPrModel.KMS2_REGISTER) {
+            outMask = outMask and 2.0.pow(nor).toInt().inv().toShort()
+            writeRegister(register, outMask2)
+        }
     }
 
 
@@ -258,5 +266,6 @@ class OwenPrController(
         writeRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 0)
         writeRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 0)
         outMask = 0
+        outMask2 = 0
     }
 }

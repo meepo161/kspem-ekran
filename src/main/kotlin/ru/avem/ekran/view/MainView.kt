@@ -1,22 +1,24 @@
 package ru.avem.ekran.view
 
+import javafx.beans.property.SimpleIntegerProperty
 import javafx.geometry.Pos
 import javafx.scene.control.*
 import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.Priority
+import javafx.scene.layout.VBox
 import javafx.scene.shape.Circle
 import javafx.stage.Modality
 import javafx.stage.Stage
 import org.slf4j.LoggerFactory
-import ru.avem.ekran.controllers.*
+import ru.avem.ekran.controllers.MainViewController
 import ru.avem.ekran.database.entities.TestObjectsType
 import ru.avem.ekran.entities.*
-import ru.avem.ekran.utils.transitionLeft
 import ru.avem.ekran.view.Styles.Companion.megaHard
 import tornadofx.*
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.GroupLayout
 import kotlin.system.exitProcess
 
 class MainView : View("Комплексный стенд проверки электрических машин") {
@@ -29,6 +31,10 @@ class MainView : View("Комплексный стенд проверки эле
 
     var mainMenubar: MenuBar by singleAssign()
     var comIndicate: Circle by singleAssign()
+    var lightButton: Button by singleAssign()
+    var vBoxLog: VBox by singleAssign()
+
+    val checkBoxIntBind = SimpleIntegerProperty() //TODO переименовать нормально
 
     private var imgPressure: ImageView by singleAssign()
     private var img: ImageView by singleAssign()
@@ -40,7 +46,7 @@ class MainView : View("Комплексный стенд проверки эле
 
 
     var comboBoxTestItem: ComboBox<TestObjectsType> by singleAssign()
-    var comboBoxPlatform: ComboBox<String> by singleAssign()
+    var textFieldPlatform: TextField by singleAssign()
 
 
     var buttonStart: Button by singleAssign()
@@ -50,17 +56,8 @@ class MainView : View("Комплексный стенд проверки эле
     var checkBoxTest3: CheckBox by singleAssign()
     var checkBoxTest4: CheckBox by singleAssign()
     var checkBoxTest5: CheckBox by singleAssign()
-    var checkBoxTest6: CheckBox by singleAssign()
-    var textFieldSerialNumber: TextField by singleAssign()
 
     var test1Modal: Stage = Stage()
-
-    var test1Controller = Test1Controller()
-    var test2Controller = Test2Controller()
-    var test3Controller = Test4Controller()
-    var test4Controller = Test5Controller()
-    var test5Controller = Test6Controller()
-
 
     companion object {
         private val logger = LoggerFactory.getLogger(MainView::class.java)
@@ -84,9 +81,6 @@ class MainView : View("Комплексный стенд проверки эле
         top {
             mainMenubar = menubar {
                 menu("Меню") {
-                    item("Очистить") {
-                        action {}
-                    }
                     item("Выход") {
                         action {
                             exitProcess(0)
@@ -104,38 +98,6 @@ class MainView : View("Комплексный стенд проверки эле
                             )
                         }
                     }
-                    item("Протоколы") {
-                        action {
-                            find<ProtocolListWindow>().openModal(
-                                modality = Modality.APPLICATION_MODAL,
-                                escapeClosesWindow = true,
-                                resizable = false,
-                                owner = this@MainView.currentWindow
-                            )
-                        }
-                    }
-                }
-                menu("Отладка") {
-                    item("Связь с приборами") {
-                        action {
-                            find<DevicesView>().openModal(
-                                modality = Modality.APPLICATION_MODAL,
-                                escapeClosesWindow = true,
-                                resizable = false,
-                                owner = this@MainView.currentWindow
-                            )
-                        }
-                    }
-                    item("Осцилограф") {
-                        action {
-                            find<AAOPView>().openModal(
-                                modality = Modality.NONE,
-                                escapeClosesWindow = true,
-                                resizable = true,
-                                owner = this@MainView.currentWindow
-                            )
-                        }
-                    }
                 }
                 menu("Информация") {
                     item("Версия ПО") {
@@ -147,166 +109,147 @@ class MainView : View("Комплексный стенд проверки эле
             }.addClass(megaHard)
         }
         center {
-            tabpane {
-                tab("Испытания") {
-                    isClosable = false
-                    anchorpane {
-//                img = imageview(Image("back2.png"))
-//                img.fitHeight = Screen.getPrimary().bounds.height - 400
-                        vbox(spacing = 32.0) {
-                            anchorpaneConstraints {
-                                leftAnchor = 16.0
-                                rightAnchor = 16.0
-                                topAnchor = 16.0
-                                bottomAnchor = 16.0
-                            }
-                            alignmentProperty().set(Pos.CENTER)
-                            hbox(spacing = 64.0) {
-                                alignmentProperty().set(Pos.CENTER)
-                                vbox(spacing = 16.0) {
-                                    alignmentProperty().set(Pos.CENTER)
-                                    label("Серийный номер:")
-                                    textFieldSerialNumber = textfield {
-                                        prefWidth = 640.0
-                                        text = "1234"
-                                    }
-                                    label("Выберите тип двигателя:")
-                                    comboBoxTestItem = combobox {
-                                        prefWidth = 640.0
-                                    }
-                                    label("Выберите платформу:")
-                                    comboBoxPlatform = combobox {
-                                        prefWidth = 640.0
-                                        items = observableListOf("Платформа 1", "Платформа 2")
-                                    }
-                                }
-                                vbox(spacing = 16.0) {
-                                    alignmentProperty().set(Pos.CENTER_LEFT)
-                                    label("Выберите опыты:")
-//                            checkbox("Выбрать все") {
-//
-//                            }
-//                                    buttonSelectAll = button("Выбрать все") {
-//                                        action {
-//                                            if (text == "Выбрать все") {
-//                                                checkBoxTest1.isSelected = true
-//                                                checkBoxTest2.isSelected = true
-//                                                checkBoxTest3.isSelected = true
-//                                                checkBoxTest4.isSelected = true
-//                                                checkBoxTest5.isSelected = true
-//                                                checkBoxTest6.isSelected = true
-//                                                text = "Развыбрать все"
-//                                            } else {
-//                                                checkBoxTest1.isSelected = false
-//                                                checkBoxTest2.isSelected = false
-//                                                checkBoxTest3.isSelected = false
-//                                                checkBoxTest4.isSelected = false
-//                                                checkBoxTest5.isSelected = false
-//                                                checkBoxTest6.isSelected = false
-//                                                text = "Выбрать все"
-//                                            }
-//                                        }
-//                                    }
-                                    checkBoxTest1 = checkbox("1. Сопротивление обмоток постоянному току") {}
-                                    checkBoxTest2 = checkbox("2. Сопротивление изоляции") {}
-                                    checkBoxTest3 = checkbox("3. Электрическая прочность изоляции") {}
-                                    checkBoxTest4 = checkbox("4. Межвитковые замыкания, обрывы") {}
-                                    checkBoxTest5 = checkbox("5. ???Правильность соединения обмоток???") {}
-                                    checkBoxTest6 = checkbox("6. Доп.") {}
-                                }
-                            }
-                            buttonStart = button("Запустить") {
-                                prefWidth = 640.0
-                                prefHeight = 128.0
-                                action {
-                                    controller.handleStartTest()
-                                }
-                            }.addClass(megaHard)
+            anchorpane {
+                vbox(spacing = 32.0) {
+                    anchorpaneConstraints {
+                        leftAnchor = 16.0
+                        rightAnchor = 16.0
+                        topAnchor = 16.0
+                        bottomAnchor = 16.0
+                    }
+                    alignmentProperty().set(Pos.CENTER)
+
+                    hbox(spacing = 64.0) {
+                        alignmentProperty().set(Pos.CENTER)
+                        label("Тип двигателя:")
+                        comboBoxTestItem = combobox {
+                            prefWidth = 320.0
+                        }
+                        label("Место:")
+                        textFieldPlatform = textfield {
+                            text = ""
+                            prefWidth = 320.0
                         }
                     }
-                }
-                tab("Результаты") {
-                    isClosable = false
-                    anchorpane {
-                        vbox(spacing = 8) {
-                            anchorpaneConstraints {
-                                leftAnchor = 16.0
-                                rightAnchor = 16.0
-                                topAnchor = 16.0
-                                bottomAnchor = 16.0
-                            }
-                            alignment = Pos.CENTER
-
+                    hbox(spacing = 64.0) {
+                        alignmentProperty().set(Pos.CENTER)
+                        label("Выберите опыты:")
+                    }.addClass(Styles.extraHard)
+                    hbox(spacing = 16.0) {
+                        alignmentProperty().set(Pos.CENTER)
+                        vbox(spacing = 16.0) {
+                            alignmentProperty().set(Pos.CENTER_LEFT)
+                            checkBoxTest1 =
+                                checkbox("1. Сопротивление обмоток постоянному току") {
+//                                    bind(checkBoxIntBind)
+                                }.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest1) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
+                                minWidth = 900.0
+                                prefWidth = 900.0
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
-
                                 column("", TableValuesTest1::descriptor.getter)
-                                column("R AB, Ом", TableValuesTest1::resistanceAB.getter)
-                                column("R BC, Ом", TableValuesTest1::resistanceBC.getter)
-                                column("R CA, Ом", TableValuesTest1::resistanceCA.getter)
+                                column("AB, Ом", TableValuesTest1::resistanceAB.getter)
+                                column("BC, Ом", TableValuesTest1::resistanceBC.getter)
+                                column("CA, Ом", TableValuesTest1::resistanceCA.getter)
                                 column("Результат", TableValuesTest1::result.getter)
                             }
+
+                            checkBoxTest2 = checkbox("2. Сопротивление изоляции") {}.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest2) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
+                                minWidth = 900.0
+                                prefWidth = 900.0
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
-
                                 column("", TableValuesTest2::descriptor.getter)
-                                column("R, Ом", TableValuesTest2::resistanceR.getter)
+                                column("Сопротивление, МОм", TableValuesTest2::resistanceR.getter)
                                 column("Результат", TableValuesTest2::result.getter)
                             }
+
+                            checkBoxTest3 =
+                                checkbox("3. Электрическая прочность изоляции") {}.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest3) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
+                                minWidth = 900.0
+                                prefWidth = 900.0
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
-
                                 column("", TableValuesTest3::descriptor.getter)
                                 column("U, В", TableValuesTest3::voltage.getter)
                                 column("I, мА", TableValuesTest3::current.getter)
                                 column("Результат", TableValuesTest3::result.getter)
                             }
+                        }
+                        vbox(spacing = 16.0) {
+                            alignmentProperty().set(Pos.CENTER_LEFT)
+                            checkBoxTest4 = checkbox("4. Межвитковые замыкания, обрывы") {}.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest4) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
+                                minWidth = 900.0
+                                prefWidth = 900.0
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
-
                                 column("", TableValuesTest4::descriptor.getter)
-                                column("R AB, Ом", TableValuesTest4::resistanceInductiveAB.getter)
-                                column("R BC, Ом", TableValuesTest4::resistanceInductiveBC.getter)
-                                column("R CA, Ом", TableValuesTest4::resistanceInductiveCA.getter)
+                                column("AB, Ом", TableValuesTest4::resistanceInductiveAB.getter)
+                                column("BC, Ом", TableValuesTest4::resistanceInductiveBC.getter)
+                                column("CA, Ом", TableValuesTest4::resistanceInductiveCA.getter)
                                 column("Результат", TableValuesTest4::result.getter)
                             }
+
+                            checkBoxTest5 = checkbox("5. Правильность соединения обмоток") {}.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest5) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
+                                minWidth = 900.0
+                                prefWidth = 900.0
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
-
                                 column("", TableValuesTest5::descriptor.getter)
-                                column("U, В", TableValuesTest5::resistance.getter)
+                                column("R", TableValuesTest5::resistanceR.getter)
+                                column("L", TableValuesTest5::resistanceL.getter)
                                 column("Результат", TableValuesTest5::result.getter)
                             }
-                            tableview(controller.tableValuesTest6) {
-                                minHeight = 146.0
-                                maxHeight = 146.0
-                                columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
-                                mouseTransparentProperty().set(true)
+                            anchorpane {
+                                scrollpane {
+                                    anchorpaneConstraints {
+                                        leftAnchor = 0.0
+                                        rightAnchor = 0.0
+                                        topAnchor = 0.0
+                                        bottomAnchor = 0.0
+                                    }
+                                    minHeight = 209.0
+                                    maxHeight = 209.0
+                                    prefHeight = 209.0
+                                    minWidth = 900.0
+                                    prefWidth = 900.0
+                                    vBoxLog = vbox {
+                                    }.addClass(megaHard)
 
-                                column("", TableValuesTest6::descriptor.getter)
-                                column("Результат", TableValuesTest6::result.getter)
+                                    vvalueProperty().bind(vBoxLog.heightProperty())
+                                }
                             }
                         }
+                    }
+                    hbox(spacing = 16) {
+                        alignment = Pos.CENTER
+                        buttonStart = button("Запустить") {
+                            prefWidth = 640.0
+                            prefHeight = 128.0
+                            action {
+                                controller.handleStartTest()
+                            }
+                        }.addClass(Styles.extraHard)
                     }
                 }
             }
         }
-        bottom = hbox {
+        bottom = hbox(spacing = 32) {
             alignment = Pos.CENTER_LEFT
             comIndicate = circle(radius = 18) {
                 hboxConstraints {
@@ -324,36 +267,17 @@ class MainView : View("Комплексный стенд проверки эле
                     marginBottom = 8.0
                 }
             }
-        }
-        button("Включить освещение") {
-            action {
+            lightButton = button("Включить освещение") {
+                action {
+                    text = if (text == "Включить освещение") {
+                        controller.onLight()
+                        "Отключить освещение"
+                    } else {
+                        controller.offLight()
+                        "Включить освещение"
+                    }
+                }
             }
         }
     }.addClass(Styles.blueTheme, megaHard)
-
-    fun start1Test() {
-        replaceWith<Test1View>(transitionLeft)
-    }
-
-    fun start2Test() {
-        replaceWith<Test2View>(transitionLeft)
-    }
-
-    fun start3Test() {
-        replaceWith<Test3View>(transitionLeft)
-    }
-
-    fun start4Test() {
-        replaceWith<Test4View>(transitionLeft)
-    }
-
-    fun start5Test() {
-        replaceWith<Test5View>(transitionLeft)
-    }
-
-    fun start6Test() {
-        replaceWith<Test6View>(transitionLeft)
-    }
-
-
 }

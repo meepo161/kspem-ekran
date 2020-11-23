@@ -62,12 +62,12 @@ class Styles : Stylesheet() {
             fontWeight = FontWeight.BOLD
         }
 
-        extraHard {
-            fontSize = 24.px
-            fontWeight = FontWeight.EXTRA_BOLD
+        megaHard {
+            fontSize = 20.px
+            fontWeight = FontWeight.BOLD
         }
 
-        megaHard {
+        extraHard {
             fontSize = 32.px
             fontWeight = FontWeight.EXTRA_BOLD
         }

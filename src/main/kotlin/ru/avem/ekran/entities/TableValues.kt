@@ -33,7 +33,10 @@ data class TableValuesTest4(
 )
 
 data class TableValuesTest5(
-    var descriptor: StringProperty, var resistance: StringProperty, var result: StringProperty
+    var descriptor: StringProperty,
+    var resistanceR: StringProperty,
+    var resistanceL: StringProperty,
+    var result: StringProperty
 )
 
 data class TableValuesTest6(

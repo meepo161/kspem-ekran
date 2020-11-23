@@ -5,7 +5,6 @@ import ru.avem.ekran.communication.adapters.utils.ModbusRegister
 import ru.avem.ekran.communication.model.DeviceRegister
 import ru.avem.ekran.communication.model.IDeviceController
 import ru.avem.ekran.communication.utils.TransportException
-import ru.avem.ekran.utils.Log
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.experimental.and
@@ -102,27 +101,27 @@ class OwenPrController(
     override fun getRegisterById(idRegister: String) = model.getRegisterById(idRegister)
 
     private fun onBitInRegister(register: DeviceRegister, bitPosition: Short) {
-        Log.i("onBitInRegister", Thread.currentThread().name)
         val nor = bitPosition - 1
-        if (register.toString() == OwenPrModel.KMS1_REGISTER) {
-            outMask = outMask or 2.0.pow(nor).toInt().toShort()
-            writeRegister(register, outMask)
-        } else if (register.toString() == OwenPrModel.KMS2_REGISTER) {
-            outMask2 = outMask2 or 2.0.pow(nor).toInt().toShort()
-            writeRegister(register, outMask2)
-        }
+        outMask = outMask or 2.0.pow(nor).toInt().toShort()
+        writeRegister(register, outMask)
+    }
+
+    private fun onBitInRegister2(register: DeviceRegister, bitPosition: Short) {
+        val nor = bitPosition - 1
+        outMask2 = outMask2 or 2.0.pow(nor).toInt().toShort()
+        writeRegister(register, outMask2)
     }
 
     private fun offBitInRegister(register: DeviceRegister, bitPosition: Short) {
-        Log.i("offBitInRegister", Thread.currentThread().name)
         val nor = bitPosition - 1
-        if (register.toString() == OwenPrModel.KMS1_REGISTER) {
-            outMask = outMask and 2.0.pow(nor).toInt().inv().toShort()
-            writeRegister(register, outMask)
-        } else if (register.toString() == OwenPrModel.KMS2_REGISTER) {
-            outMask = outMask and 2.0.pow(nor).toInt().inv().toShort()
-            writeRegister(register, outMask2)
-        }
+        outMask = outMask and 2.0.pow(nor).toInt().inv().toShort()
+        writeRegister(register, outMask)
+    }
+
+    private fun offBitInRegister2(register: DeviceRegister, bitPosition: Short) {
+        val nor = bitPosition - 1
+        outMask2 = outMask2 and 2.0.pow(nor).toInt().inv().toShort()
+        writeRegister(register, outMask2)
     }
 
 
@@ -130,6 +129,9 @@ class OwenPrController(
         writeRegister(getRegisterById(OwenPrModel.RESET_TIMER), 0)
         writeRegister(getRegisterById(OwenPrModel.RESET_TIMER), 1)
         writeRegister(getRegisterById(OwenPrModel.RES_REGISTER), 1)
+    }
+
+    fun resetKMS() {
         writeRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 0)
         writeRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 0)
     }
@@ -167,35 +169,35 @@ class OwenPrController(
     }
 
     fun onKM1() {
-        onBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 1)
+        onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 1)
     }
 
     fun onKM32() {
-        onBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 2)
+        onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 2)
     }
 
     fun onKM31() {
-        onBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 3)
+        onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 3)
     }
 
     fun onKM42() {
-        onBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 4)
+        onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 4)
     }
 
     fun onKM41() {
-        onBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 5)
+        onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 5)
     }
 
     fun onKM33() {
-        onBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 6)
+        onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 6)
     }
 
     fun onKM44() {
-        onBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 7)
+        onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 7)
     }
 
     fun onKM30() {
-        onBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 8)
+        onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 8)
     }
 
     fun offKM51() {
@@ -231,35 +233,35 @@ class OwenPrController(
     }
 
     fun offKM1() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 1)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 1)
     }
 
     fun offKM32() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 2)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 2)
     }
 
     fun offKM31() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 3)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 3)
     }
 
     fun offKM42() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 4)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 4)
     }
 
     fun offKM41() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 5)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 5)
     }
 
     fun offKM33() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 6)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 6)
     }
 
     fun offKM44() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 7)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 7)
     }
 
     fun offKM30() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS2_REGISTER), 8)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 8)
     }
 
     fun offAllKMs() {

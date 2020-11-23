@@ -14,6 +14,7 @@ class Ekran : App(MainView::class, Styles::class) {
 
     companion object {
         var isAppRunning = true
+        var forOneInit = true
     }
 
     override fun init() {

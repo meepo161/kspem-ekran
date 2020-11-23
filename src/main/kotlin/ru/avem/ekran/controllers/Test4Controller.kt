@@ -1,67 +1,57 @@
 package ru.avem.ekran.controllers
 
+
 import javafx.application.Platform
-import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.property.SimpleStringProperty
 import javafx.scene.text.Text
-import ru.avem.ekran.communication.adapters.ack3002.driver.ACKScopeDrv
-import ru.avem.ekran.entities.TableValuesTest4
+import ru.avem.ekran.communication.model.CommunicationModel
+import ru.avem.ekran.communication.model.devices.avem.avem4.Avem4Model
+import ru.avem.ekran.communication.model.devices.avem.avem7.Avem7Model
+import ru.avem.ekran.communication.model.devices.bris.m4122.M4122Controller
+import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
 import ru.avem.ekran.utils.LogTag
-import ru.avem.ekran.utils.Singleton
 import ru.avem.ekran.utils.formatRealNumber
 import ru.avem.ekran.utils.sleep
-import ru.avem.ekran.view.Test4View
-import tornadofx.*
+import ru.avem.ekran.view.MainView
+import tornadofx.add
+import tornadofx.style
 import java.text.SimpleDateFormat
-import java.util.*
 import kotlin.concurrent.thread
+import kotlin.experimental.and
 
-class Test4Controller : Controller(), Observer {
-
+class Test4Controller : TestController() {
     private lateinit var factoryNumber: String
-    val view: Test4View by inject()
     val controller: MainViewController by inject()
-    private val pACKScopeDrv: ACKScopeDrv? = null
+    val mainView: MainView by inject()
 
-    var tableValues = observableList(
-        TableValuesTest4(
-            SimpleStringProperty("Заданные"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("")
-        ),
+    private var logBuffer: String? = null
+    private var cause: String = ""
 
-        TableValuesTest4(
-            SimpleStringProperty("Измеренные"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("")
-        )
-    )
+    @Volatile
+    var isExperimentEnded: Boolean = true
 
-    fun clearTable() {
-        tableValues.forEach {
-            it.resistanceInductiveAB.value = "0.0"
-            it.result.value = ""
-        }
-        fillTableByEO()
-    }
+    @Volatile
+    private var ikasReadyParam: Float = 0f
 
-    fun clearLog() {
-        Platform.runLater { view.vBoxLog.clear() }
-    }
+    @Volatile
+    private var measuringU: Double = 0.0
 
-    fun fillTableByEO() {
-        tableValues[0].resistanceInductiveAB.value = Singleton.currentTestItem.resistanceContactGroup
-    }
+    @Volatile
+    private var measuringI: Double = 0.0
 
-    fun setExperimentProgress(currentTime: Int, time: Int = 1) {
-        Platform.runLater {
-            view.progressBarTime.progress = currentTime.toDouble() / time
-        }
-    }
+    @Volatile
+    private var currentVIU: Boolean = false
+
+    @Volatile
+    private var startButton: Boolean = false
+
+    @Volatile
+    private var stopButton: Boolean = false
+
+    @Volatile
+    private var platform1: Boolean = false
+
+    @Volatile
+    private var platform2: Boolean = false
 
     fun appendMessageToLog(tag: LogTag, _msg: String) {
         val msg = Text("${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())} | $_msg")
@@ -75,56 +65,125 @@ class Test4Controller : Controller(), Observer {
         }
 
         Platform.runLater {
-            view.vBoxLog.add(msg)
+            mainView.vBoxLog.add(msg)
+        }
+    }
+
+    private fun startPollDevices() {
+        CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.FIXED_STATES_REGISTER_1) { value ->
+            currentVIU = value.toShort() and 1 > 0
+            startButton = value.toShort() and 64 > 0
+            stopButton = value.toShort() and 128 > 0
+            if (currentVIU) {
+                controller.setCause("Сработала токовая защита")
+            }
+            if (stopButton) {
+                controller.setCause("Нажали кнопку СТОП")
+            }
+        }
+        CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.INSTANT_STATES_REGISTER_2) { value ->
+            platform1 = value.toShort() and 4 > 0
+            platform2 = value.toShort() and 2 > 0
+
+            if (mainView.textFieldPlatform.text == "Платформа 1" && !platform1) {
+                controller.setCause("Не закрыта крышка платформы 1")
+            }
+            if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
+                controller.setCause("Не закрыта крышка платформы 2")
+            }
+        }
+        CommunicationModel.startPoll(CommunicationModel.DeviceID.PV21, Avem7Model.AMPERAGE) { value ->
+            measuringI = formatRealNumber(value.toDouble() * 5)
+        }
+        CommunicationModel.startPoll(CommunicationModel.DeviceID.PV24, Avem4Model.RMS_VOLTAGE) { value ->
+            measuringU = formatRealNumber(value.toDouble())
         }
     }
 
     fun startTest() {
-        thread {
-
+        thread(isDaemon = true) {
             Platform.runLater {
-                view.buttonBack.isDisable = true
-                view.buttonStartStopTest.text = "Остановить"
-                view.buttonNextTest.isDisable = true
+                mainView.buttonStart.text = "Остановить"
             }
 
-            clearLog()
-            clearTable()
-            appendMessageToLog(LogTag.DEBUG, "Инициализация")
-            sleep(1000)
+            controller.isExperimentRunning = true
+            isExperimentEnded = false
 
-            appendMessageToLog(LogTag.DEBUG, "Сбор схемы")
-            sleep(1000)
-            appendMessageToLog(LogTag.DEBUG, "Поднятие напряжения")
-            sleep(1000)
-            tableValues[1].result.value = "Успешно"
-
-            sleep(1000)
-            appendMessageToLog(LogTag.DEBUG, "Испытание завершено")
-
-            controller.tableValuesTest4[0].resistanceInductiveAB.value = tableValues[0].resistanceInductiveAB.value
-            controller.tableValuesTest4[1].resistanceInductiveAB.value = tableValues[1].resistanceInductiveAB.value
-            controller.tableValuesTest4[1].result.value = tableValues[1].result.value
-
-            Platform.runLater {
-                view.buttonBack.isDisable = false
-                view.buttonStartStopTest.text = "Старт"
-                view.buttonNextTest.isDisable = false
+            if (controller.isExperimentRunning) {
+                appendMessageToLog(LogTag.DEBUG, "Инициализация устройств")
             }
+
+            while (!controller.isDevicesResponding() && controller.isExperimentRunning) {
+                CommunicationModel.checkDevices()
+                sleep(100)
+            }
+
+            if (controller.isExperimentRunning) {
+                CommunicationModel.addWritingRegister(
+                    CommunicationModel.DeviceID.DD2,
+                    OwenPrModel.RESET_DOG,
+                    1.toShort()
+                )
+                CommunicationModel.addWritingRegister(
+                    CommunicationModel.DeviceID.DD2,
+                    OwenPrModel.RESET_DOG,
+                    0.toShort()
+                )
+                owenPR.initOwenPR()
+                startPollDevices()
+                sleep(1000)
+            }
+
+//            while (!startButton && controller.isExperimentRunning) {
+//                appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
+//                sleep(100)
+//            }
+
+            val R = bris.setVoltageAndStartMeasuring(type = M4122Controller.MeasuringType.RESISTANCE).toDouble()
+            if (R == -1.0) {
+                controller.tableValuesTest5[0].resistanceR.value = "Вне диапазона"
+            } else {
+                controller.tableValuesTest5[0].resistanceR.value = "${R / 1000} МОм"
+            }
+
+            setResult()
+
+            finalizeExperiment()
         }
     }
 
-    override fun update(o: Observable, values: Any) {
-        val modelId = (values as Array<*>)[0] as Int
-        val param = values[1] as Int
-        val value = values[2]
+    private fun sleepWhile(timeSecond: Int) {
+        var timer = timeSecond * 10
+        while (controller.isExperimentRunning && timer-- > 0 && controller.isDevicesResponding()) {
+            sleep(100)
+        }
     }
 
-    fun initConnection() {
-//        var i = 0;
-//        while (i < 10) {
-//            view.series.data.add(XYChart.Data(i++, nextInt()))
-//        }
-        pACKScopeDrv?.initConnection()
+    private fun setResult() {
+        if (cause.isNotEmpty()) {
+            controller.tableValuesTest3[1].result.value = "Прервано"
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: $cause")
+        } else if (!controller.isDevicesResponding()) {
+            controller.tableValuesTest3[1].result.value = "Прервано"
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+        } else {
+            controller.tableValuesTest3[1].result.value = "Успешно"
+            appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")
+        }
+    }
+
+    private fun finalizeExperiment() {
+        controller.isExperimentRunning = false
+        isExperimentEnded = true
+
+        owenPR.onKM33()
+        sleep(2000)
+        owenPR.offAllKMs()
+        CommunicationModel.clearPollingRegisters()
+
+        Platform.runLater {
+            mainView.buttonStart.text = "Запустить"
+            mainView.buttonStart.isDisable = false
+        }
     }
 }

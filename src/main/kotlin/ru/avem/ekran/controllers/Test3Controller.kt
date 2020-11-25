@@ -151,14 +151,6 @@ class Test3Controller : TestController() {
         }
 
         if (controller.isExperimentRunning) {
-            appa.getMode()
-            sleep(2000)
-            if (appa.isResponding) {
-                owenPR.onAPPA()
-            }
-        }
-
-        if (controller.isExperimentRunning) {
             appendMessageToLog(LogTag.DEBUG, "Подготовка стенда")
             sleep(1000)
             owenPR.onKM1()

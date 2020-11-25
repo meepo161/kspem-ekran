@@ -12,7 +12,6 @@ import ru.avem.ekran.utils.Singleton.currentTestItem
 import ru.avem.ekran.utils.sleep
 import ru.avem.ekran.view.MainView
 import tornadofx.add
-import tornadofx.clear
 import tornadofx.style
 import java.text.SimpleDateFormat
 import kotlin.experimental.and
@@ -146,10 +145,12 @@ class Test2Controller : TestController() {
         if (controller.isExperimentRunning) {
             appendMessageToLog(LogTag.DEBUG, "Измерение R")
             appendMessageToLog(LogTag.DEBUG, "Дождитесь завершения...")
-            bris.resetWatchdog()
-            sleep(2000)
+            var attempts = 10
+            while (!bris.isResponding && attempts-- > 0) {
+                bris.resetWatchdog()
+                sleep(2000)
+            }
             if (bris.isResponding) {
-
                 measuringR =
                     bris.setVoltageAndStartMeasuring(1000, M4122Controller.MeasuringType.RESISTANCE).toDouble()
                 when (measuringR) {

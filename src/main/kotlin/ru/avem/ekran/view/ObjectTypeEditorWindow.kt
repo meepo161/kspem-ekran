@@ -81,7 +81,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                         }
                         addClass(Styles.medium)
                     }.makeEditable()
-                    column("Сопротивление изоляции, МОм", TestObjectsType::rIsolation) {
+                    column("R изоляции, МОм", TestObjectsType::rIsolation) {
                         setOnEditCommit { cell ->
                             transaction {
                                 ObjectsTypes.update({
@@ -118,6 +118,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                             label("Тип объекта")
                             textfieldType = textfield {
                                 prefWidth = 300.0
+                                    callKeyBoard()
                             }
                         }
                     }
@@ -127,15 +128,17 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                             label("XR постоянному току, Ом")
                             textfieldXR = textfield {
                                 prefWidth = 300.0
+                                    callKeyBoard()
                             }
                         }
                     }
                     hbox(spacing = 4.0) {
                         vbox(spacing = 4.0) {
                             alignment = Pos.CENTER
-                            label("Сопротивление изоляции, МОм")
+                            label("R изоляции, МОм")
                             textfieldXIsolation = textfield {
                                 prefWidth = 300.0
+                                    callKeyBoard()
                             }
                         }
                     }
@@ -145,6 +148,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                             label("XL индуктивности, мН")
                             textfieldXL = textfield {
                                 prefWidth = 300.0
+                                    callKeyBoard()
                             }
                         }
                     }
@@ -163,6 +167,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                                         }
                                     }
                                     tableViewObjects.items = controller.getObjects()
+                                    mainController.refreshObjectsTypes()
                                 }
                             }
                         }
@@ -181,6 +186,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                                         }
                                     }
                                     tableViewObjects.items = controller.getObjects()
+                                    mainController.refreshObjectsTypes()
                                 }
                             }
                         }

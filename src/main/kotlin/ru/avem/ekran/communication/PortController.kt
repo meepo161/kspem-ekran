@@ -36,7 +36,7 @@ class PortController(
     private var isTryingToConnect = false
 
     init {
-        thread {
+        thread(isDaemon = true) {
             while (isAppRunning) {
                 if (isNeedConnecting) {
                     isTryingToConnect = true

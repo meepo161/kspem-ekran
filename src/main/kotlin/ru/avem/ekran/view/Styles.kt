@@ -9,6 +9,7 @@ class Styles : Stylesheet() {
     companion object {
         val lineChart by cssclass()
         val pressure by cssclass()
+        val redTextField by cssclass()
         val blueTheme by cssclass()
         val medium by cssclass()
         val hard by cssclass()
@@ -34,9 +35,9 @@ class Styles : Stylesheet() {
 
         blueTheme {
 //            baseColor = c("#0f4c81")
-            baseColor = c("#444")
-            accentColor = c("#f88379")
-            focusColor = Paint.valueOf("#f88379")
+//            baseColor = c("#444")
+//            accentColor = c("#f88379")
+//            focusColor = Paint.valueOf("#f88379")
         }
 
         tabPane {
@@ -50,6 +51,10 @@ class Styles : Stylesheet() {
             backgroundColor += c("#2e0d08")
             textFill = c("#ff3000")
             fontWeight = FontWeight.EXTRA_BOLD
+        }
+        redTextField {
+            backgroundColor += c("#FF0000")
+            textFill = c("#FFFFFF")
         }
 
         medium {

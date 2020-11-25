@@ -27,25 +27,17 @@ import kotlin.system.exitProcess
 class MainView : View("Комплексный стенд проверки электрических машин") {
     override val configPath: Path = Paths.get("./app.conf")
 
-    //    var ackViewFXML: FXMLLoader = FXMLLoader(URL("file:///C:/Users/meepo/IdeaProjects/rele2/src/main/resources/ru/avem/ekran/layout/ackView.fxml"))
-//    var ackViewFXML: InputStream = this::class.java.classLoader.getResourceAsStream("./layout/ackView.fxml")
-
     private val controller: MainViewController by inject()
 
     var mainMenubar: MenuBar by singleAssign()
     var comIndicate: Circle by singleAssign()
-    var lightButton: Button by singleAssign()
     var vBoxLog: VBox by singleAssign()
 
     val checkBoxIntBind = SimpleIntegerProperty() //TODO переименовать нормально
 
-    private var imgPressure: ImageView by singleAssign()
-    private var img: ImageView by singleAssign()
-
     private var addIcon = ImageView("ru/avem/ekran/icon/add.png")
     private var deleteIcon = ImageView("ru/avem/ekran/icon/delete.png")
     private var editIcon = ImageView("ru/avem/ekran/icon/edit.png")
-    private var pressureJPG = Image("ru/avem/ekran/icon/pressure.jpg", 400.0, 280.0, false, true)
 
 
     var comboBoxTestItem: ComboBox<TestObjectsType> by singleAssign()
@@ -53,20 +45,16 @@ class MainView : View("Комплексный стенд проверки эле
 
 
     var buttonStart: Button by singleAssign()
-    var buttonSelectAll: Button by singleAssign()
+    var buttonStop: Button by singleAssign()
     var checkBoxTest1: CheckBox by singleAssign()
     var checkBoxTest2: CheckBox by singleAssign()
     var checkBoxTest3: CheckBox by singleAssign()
     var checkBoxTest4: CheckBox by singleAssign()
     var checkBoxTest5: CheckBox by singleAssign()
-    var firstStart = true
-
-    var test1Modal: Stage = Stage()
 
     private val value1 = SimpleBooleanProperty()
     private val value2 = SimpleBooleanProperty()
     private val value3 = SimpleBooleanProperty()
-    private var manualChanged = false
 
     companion object {
         private val logger = LoggerFactory.getLogger(MainView::class.java)
@@ -130,22 +118,31 @@ class MainView : View("Комплексный стенд проверки эле
 
                     hbox(spacing = 64.0) {
                         alignmentProperty().set(Pos.CENTER)
-                        label("Тип двигателя:")
+                        label("Тип двигателя:") {}.addClass(Styles.extraHard)
                         comboBoxTestItem = combobox {
                             prefWidth = 320.0
                             setOnAction {
-                                controller.refreshTable()
+                                controller.initTable()
                             }
+                            addClass(Styles.extraHard)
                         }
-                        label("Место:")
+                        label("Место:").addClass(Styles.extraHard)
                         textFieldPlatform = textfield {
                             text = ""
                             prefWidth = 320.0
-                        }
-                    }
+                        }.addClass(Styles.extraHard)
+                    }.addClass(Styles.extraHard)
                     hbox(spacing = 64.0) {
                         alignmentProperty().set(Pos.CENTER)
-                        label("Выберите опыты:")
+                        button("Выбрать все опыты:") {
+                            action {
+                                checkBoxTest1.isSelected = true
+                                checkBoxTest2.isSelected = true
+                                checkBoxTest3.isSelected = true
+                                checkBoxTest4.isSelected = true
+                                checkBoxTest5.isSelected = true
+                            }
+                        }
                     }.addClass(Styles.extraHard)
                     hbox(spacing = 16.0) {
                         alignmentProperty().set(Pos.CENTER)
@@ -280,6 +277,13 @@ class MainView : View("Комплексный стенд проверки эле
                             prefHeight = 128.0
                             action {
                                 controller.handleStartTest()
+                            }
+                        }.addClass(Styles.extraHard)
+                        buttonStop = button("Остановить") {
+                            prefWidth = 640.0
+                            prefHeight = 128.0
+                            action {
+                                controller.handleStopTest()
                             }
                         }.addClass(Styles.extraHard)
                     }

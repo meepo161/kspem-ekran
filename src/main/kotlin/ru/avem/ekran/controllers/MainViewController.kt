@@ -1,6 +1,8 @@
 package ru.avem.ekran.controllers
 
+import javafx.application.Platform
 import javafx.beans.property.SimpleStringProperty
+import javafx.scene.text.Text
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.avem.ekran.app.Ekran.Companion.forOneInit
 import ru.avem.ekran.app.Ekran.Companion.isAppRunning
@@ -9,21 +11,18 @@ import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
 import ru.avem.ekran.database.entities.ObjectsTypes
 import ru.avem.ekran.database.entities.TestObjectsType
 import ru.avem.ekran.entities.*
-import ru.avem.ekran.utils.Singleton
-import ru.avem.ekran.utils.State
-import ru.avem.ekran.utils.Toast
-import ru.avem.ekran.utils.sleep
+import ru.avem.ekran.utils.*
 import ru.avem.ekran.view.MainView
-import tornadofx.asObservable
-import tornadofx.observableListOf
-import tornadofx.runLater
-import tornadofx.selectedItem
+import ru.avem.ekran.view.Styles
+import tornadofx.*
+import java.text.SimpleDateFormat
 import kotlin.concurrent.thread
 import kotlin.experimental.and
 
 
 class MainViewController : TestController() {
     val view: MainView by inject()
+    val controller: MainViewController by inject()
     var position1 = ""
 
     var tableValuesTest1 = observableListOf(
@@ -106,7 +105,11 @@ class MainViewController : TestController() {
         )
     )
 
-    private var cause: String = ""
+    var cause: String = ""
+        set(value) {
+            isExperimentRunning = false
+            field = value
+        }
 
     @Volatile
     var isExperimentRunning: Boolean = false
@@ -139,9 +142,8 @@ class MainViewController : TestController() {
             )
             owenPR.initOwenPR()
             owenPR.resetKMS()
-            startPollDevices()
 
-            thread {
+            thread(isDaemon = true) {
                 while (isAppRunning) {
                     if (owenPR.isResponding) {
                         runLater {
@@ -158,6 +160,10 @@ class MainViewController : TestController() {
 
             forOneInit = false
         }
+        startPollDevices()
+        runLater {
+            view.buttonStop.isDisable = true
+        }
     }
 
     var isDevicesResponding: () -> Boolean = {
@@ -170,25 +176,28 @@ class MainViewController : TestController() {
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
-                setCause("Сработала токовая защита")
+                controller.cause = "Сработала токовая защита"
             }
             if (stopButton) {
-                setCause("Нажали кнопку СТОП")
+                controller.cause = "Нажали кнопку СТОП"
             }
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.INSTANT_STATES_REGISTER_2) { value ->
             platform1 = value.toShort() and 4 > 0
             platform2 = value.toShort() and 2 > 0
-            view.buttonStart.isDisable = !platform1 && !platform2
+//            view.buttonStart.isDisable = !platform1 && !platform2
             runLater {
                 when {
                     platform1 -> {
+                        view.textFieldPlatform.removeClass(Styles.redTextField)
                         view.textFieldPlatform.text = "Платформа 1"
                     }
                     platform2 -> {
+                        view.textFieldPlatform.removeClass(Styles.redTextField)
                         view.textFieldPlatform.text = "Платформа 2"
                     }
                     else -> {
+                        view.textFieldPlatform.addClass(Styles.redTextField)
                         view.textFieldPlatform.text = "Закройте крышку платформы"
                     }
                 }
@@ -196,68 +205,85 @@ class MainViewController : TestController() {
         }
     }
 
-    fun setCause(cause: String) {
-        this.cause = cause
-        if (cause.isNotEmpty()) {
-            isExperimentRunning = false
-        }
-        view.buttonStart.isDisable = true
-    }
-
     fun handleStartTest() {
-        if (view.buttonStart.text == "Запустить") {
-            if (view.comboBoxTestItem.selectionModel.isEmpty) {
-                runLater {
-                    Toast.makeText("Выберите объект испытания").show(Toast.ToastType.WARNING)
-                }
-            } else if (!isAtLeastOneIsSelected()) {
-                runLater {
-                    Toast.makeText("Выберите хотя бы одно испытание из списка").show(Toast.ToastType.WARNING)
-                }
-            } else {
-                Singleton.currentTestItem = transaction {
-                    TestObjectsType.find {
-                        ObjectsTypes.id eq view.comboBoxTestItem.selectedItem!!.id
-                    }.toList().asObservable()
-                }.first()
-                view.buttonStart.text = "Остановить"
-                thread(isDaemon = true) {
-                    if (view.checkBoxTest1.isSelected) {
-                        isDevicesResponding = {
-                            owenPR.isResponding || bris.isResponding
-                        }
-                        Test1Controller().startTest()
-                    }
-                    if (view.checkBoxTest2.isSelected) {
-                        isDevicesResponding = {
-                            owenPR.isResponding
-                        }
-                        Test2Controller().startTest()
-                    }
-                    if (view.checkBoxTest3.isSelected) {
-                        isDevicesResponding = {
-                            owenPR.isResponding || deltaCP.isResponding || avem4.isResponding || avem7.isResponding
-                        }
-                        Test3Controller().startTest()
-                    }
-                    if (view.checkBoxTest4.isSelected) {
-                        isDevicesResponding = {
-                            owenPR.isResponding
-                        }
-                        Test4Controller().startTest()
-                    }
-                    if (view.checkBoxTest5.isSelected) {
-                        isDevicesResponding = {
-                            owenPR.isResponding
-                        }
-                        Test5Controller().startTest()
-                    }
-                }
-                view.buttonStart.text = "Запустить"
+        if (view.comboBoxTestItem.selectionModel.isEmpty) {
+            runLater {
+                Toast.makeText("Выберите объект испытания").show(Toast.ToastType.WARNING)
+            }
+        } else if (!isAtLeastOneIsSelected()) {
+            runLater {
+                Toast.makeText("Выберите хотя бы одно испытание из списка").show(Toast.ToastType.WARNING)
             }
         } else {
-            isExperimentRunning = false
-            view.buttonStart.text = "Запустить"
+            Singleton.currentTestItem = transaction {
+                TestObjectsType.find {
+                    ObjectsTypes.id eq view.comboBoxTestItem.selectedItem!!.id
+                }.toList().asObservable()
+            }.first()
+            thread(isDaemon = true) {
+                runLater {
+                    view.buttonStart.isDisable = true
+                    view.buttonStop.isDisable = false
+                }
+                clearTable()
+                CommunicationModel.clearPollingRegisters()
+                if (view.checkBoxTest1.isSelected) {
+                    isDevicesResponding = {
+                        owenPR.isResponding
+                    }
+                    Test1Controller().startTest()
+                }
+                if (view.checkBoxTest2.isSelected) {
+                    isDevicesResponding = {
+                        owenPR.isResponding
+                    }
+                    Test2Controller().startTest()
+                }
+                if (view.checkBoxTest3.isSelected) {
+                    isDevicesResponding = {
+                        owenPR.isResponding || deltaCP.isResponding || avem4.isResponding || avem7.isResponding
+                    }
+                    Test3Controller().startTest()
+                }
+                if (view.checkBoxTest4.isSelected) {
+                    isDevicesResponding = {
+                        owenPR.isResponding
+                    }
+                    Test4Controller().startTest()
+                }
+                if (view.checkBoxTest5.isSelected) {
+                    isDevicesResponding = {
+                        owenPR.isResponding
+                    }
+                    Test5Controller().startTest()
+                }
+
+                appendMessageToLog(LogTag.MESSAGE, "Испытания завершены")
+                startPollDevices()
+                runLater {
+                    view.buttonStart.isDisable = false
+                    view.buttonStop.isDisable = true
+                }
+            }
+        }
+    }
+
+    fun handleStopTest() {
+        cause = "Остановлено оператором"
+    }
+
+    private fun appendMessageToLog(tag: LogTag, _msg: String) {
+        val msg = Text("${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())} | $_msg")
+        msg.style {
+            fill = when (tag) {
+                LogTag.MESSAGE -> tag.c
+                LogTag.ERROR -> tag.c
+                LogTag.DEBUG -> tag.c
+            }
+        }
+
+        Platform.runLater {
+            view.vBoxLog.add(msg)
         }
     }
 
@@ -278,7 +304,7 @@ class MainViewController : TestController() {
         view.comboBoxTestItem.selectionModel.select(selectedIndex)
     }
 
-    fun refreshTable() {
+    fun initTable() {
         runLater {
             tableValuesTest1[0].resistanceAB.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xR
             tableValuesTest1[0].resistanceBC.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xR
@@ -299,7 +325,29 @@ class MainViewController : TestController() {
         }
     }
 
+    fun clearTable() {
+        runLater {
+            tableValuesTest1[1].resistanceAB.value = ""
+            tableValuesTest1[1].resistanceBC.value = ""
+            tableValuesTest1[1].resistanceCA.value = ""
+            tableValuesTest1[1].result.value = ""
+            tableValuesTest2[1].resistanceR.value = ""
+            tableValuesTest2[1].result.value = ""
+            tableValuesTest3[1].voltage.value = ""
+            tableValuesTest3[1].current.value = ""
+            tableValuesTest3[1].result.value = ""
+            tableValuesTest4[1].resistanceInductiveAB.value = ""
+            tableValuesTest4[1].resistanceInductiveBC.value = ""
+            tableValuesTest4[1].resistanceInductiveCA.value = ""
+            tableValuesTest4[1].result.value = ""
+            tableValuesTest5[1].resistanceR.value = ""
+            tableValuesTest5[1].resistanceL.value = ""
+            tableValuesTest5[1].result.value = ""
+        }
+    }
+
     fun showAboutUs() {
         Toast.makeText("Версия ПО: 1.0.0\nВерсия БСУ: 1.0.0\nДата: 30.04.2020").show(Toast.ToastType.INFORMATION)
     }
+
 }

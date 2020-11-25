@@ -64,7 +64,7 @@ interface IDeviceController {
                     "repeat $attempt/${connection.attemptCount} attempts with common success rate = ${(requestSuccessCount) * 100 / requestTotalCount}%"
                 KotlinLogging.logger(name).info(message)
             }
-            sleep(1)
+            sleep(10)
         }
     }
 

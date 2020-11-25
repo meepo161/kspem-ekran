@@ -161,9 +161,21 @@ class OwenPrController(
 
     fun onSound() {
         onBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 7)
+        sleep(3000)
+        offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 7)
     }
 
     fun onAPPA() {
+        offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
+        onBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
+        sleep(100)
+        offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
+    }
+
+    fun rebootAPPA() {
+        offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
+        onBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
+        sleep(100)
         offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
         onBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
         sleep(100)

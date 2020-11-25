@@ -47,10 +47,6 @@ class Test2Controller : TestController() {
     @Volatile
     private var platform2: Boolean = false
 
-    private fun clearLog() {
-        Platform.runLater { mainView.vBoxLog.clear() }
-    }
-
     private fun appendOneMessageToLog(tag: LogTag, message: String) {
         if (logBuffer == null || logBuffer != message) {
             logBuffer = message
@@ -79,10 +75,10 @@ class Test2Controller : TestController() {
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
-                controller.setCause("Сработала токовая защита")
+                controller.cause = "Сработала токовая защита"
             }
             if (stopButton) {
-                controller.setCause("Нажали кнопку СТОП")
+                controller.cause = "Нажали кнопку СТОП"
             }
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.INSTANT_STATES_REGISTER_2) { value ->
@@ -90,24 +86,23 @@ class Test2Controller : TestController() {
             platform2 = value.toShort() and 2 > 0
 
             if (mainView.textFieldPlatform.text == "Платформа 1" && !platform1) {
-                controller.setCause("Не закрыта крышка платформы 1")
+                controller.cause = "Не закрыта крышка платформы 1"
             }
             if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
-                controller.setCause("Не закрыта крышка платформы 2")
+                controller.cause = "Не закрыта крышка платформы 2"
             }
         }
     }
 
     fun startTest() {
+        controller.cause = ""
         testItemR = currentTestItem.xR.toDouble()
         Platform.runLater {
-            mainView.buttonStart.text = "Остановить"
             controller.tableValuesTest2[1].result.value = ""
         }
 
         controller.isExperimentRunning = true
         isExperimentEnded = false
-        clearLog()
 
         if (controller.isExperimentRunning) {
             appendMessageToLog(LogTag.DEBUG, "Инициализация устройств")
@@ -146,19 +141,24 @@ class Test2Controller : TestController() {
             } else if (mainView.textFieldPlatform.text == "Платформа 2") {
                 owenPR.onKM42()
             }
-            owenPR.changeModeAPPA()
         }
 
         if (controller.isExperimentRunning) {
             appendMessageToLog(LogTag.DEBUG, "Измерение R")
             appendMessageToLog(LogTag.DEBUG, "Дождитесь завершения...")
             bris.resetWatchdog()
-            measuringR =
-                bris.setVoltageAndStartMeasuring(1000, M4122Controller.MeasuringType.RESISTANCE).toDouble()
-            when (measuringR) {
-                BREAK.toDouble() -> controller.tableValuesTest2[1].resistanceR.value = "Обрыв"
-                NOT_RESPONDING.toDouble() -> controller.tableValuesTest2[1].resistanceR.value = "Не отвечает"
-                else -> controller.tableValuesTest2[1].resistanceR.value = (measuringR / 1000).toString()
+            sleep(2000)
+            if (bris.isResponding) {
+
+                measuringR =
+                    bris.setVoltageAndStartMeasuring(1000, M4122Controller.MeasuringType.RESISTANCE).toDouble()
+                when (measuringR) {
+                    BREAK.toDouble() -> controller.tableValuesTest2[1].resistanceR.value = "Обрыв"
+                    NOT_RESPONDING.toDouble() -> controller.tableValuesTest2[1].resistanceR.value = "Не отвечает"
+                    else -> controller.tableValuesTest2[1].resistanceR.value = (measuringR / 1000).toString()
+                }
+            } else {
+                controller.cause = "БРИС не отвечает"
             }
         }
 
@@ -171,6 +171,9 @@ class Test2Controller : TestController() {
         if (!controller.isDevicesResponding()) {
             controller.tableValuesTest2[1].result.value = "Прервано"
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами RS-485")
+        } else if (controller.cause.isNotEmpty()) {
+            controller.tableValuesTest2[1].result.value = "Прервано"
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
         } else if (!bris.isResponding) {
             controller.tableValuesTest2[1].result.value = "Прервано"
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройством БРИС")
@@ -187,11 +190,6 @@ class Test2Controller : TestController() {
         controller.isExperimentRunning = false
         owenPR.offAllKMs()
         CommunicationModel.clearPollingRegisters()
-
-        Platform.runLater {
-            mainView.buttonStart.text = "Запустить"
-            mainView.buttonStart.isDisable = false
-        }
         isExperimentEnded = true
     }
 }

@@ -82,29 +82,28 @@ class Test4Controller : TestController() {
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
-                controller.setCause("Сработала токовая защита")
+                controller.cause = "Сработала токовая защита"
             }
             if (stopButton) {
-                controller.setCause("Нажали кнопку СТОП")
+                controller.cause = "Нажали кнопку СТОП"
             }
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.INSTANT_STATES_REGISTER_2) { value ->
             platform1 = value.toShort() and 4 > 0
             platform2 = value.toShort() and 2 > 0
-
             if (mainView.textFieldPlatform.text == "Платформа 1" && !platform1) {
-                controller.setCause("Не закрыта крышка платформы 1")
+                controller.cause = "Не закрыта крышка платформы 1"
             }
             if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
-                controller.setCause("Не закрыта крышка платформы 2")
+                controller.cause = "Не закрыта крышка платформы 2"
             }
         }
     }
 
     fun startTest() {
+        controller.cause = ""
         testItemL = Singleton.currentTestItem.xL.toDouble()
         Platform.runLater {
-            mainView.buttonStart.text = "Остановить"
             controller.tableValuesTest4[1].resistanceInductiveAB.value = ""
             controller.tableValuesTest4[1].resistanceInductiveBC.value = ""
             controller.tableValuesTest4[1].resistanceInductiveCA.value = ""
@@ -146,17 +145,8 @@ class Test4Controller : TestController() {
             owenPR.onSound()
 
             appa.getMode()
-            sleepWhile(1)
-            while (!appa.isResponding && controller.isExperimentRunning) {
-                owenPR.onAPPA()
-                sleepWhile(10)
-                appa.getMode()
-                sleepWhile(1)
-            }
-            while (appa.getMode() != L_MODE && controller.isExperimentRunning) {
-                owenPR.changeModeAPPA()
-                sleep(2000)
-            }
+            sleepWhile(2)
+            prepareAPPAForMeasureL()
 
             if (mainView.textFieldPlatform.text == "Платформа 1") {
                 owenPR.onKM11()
@@ -173,6 +163,7 @@ class Test4Controller : TestController() {
         }
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            prepareAPPAForMeasureL()
             measuringL1 = formatRealNumber(appa.getL().toDouble())
             if (measuringL1 == -2.0) {
                 controller.tableValuesTest4[1].resistanceInductiveAB.value = "Обрыв"
@@ -189,6 +180,7 @@ class Test4Controller : TestController() {
             sleepWhile(10)
         }
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            prepareAPPAForMeasureL()
             measuringL2 = formatRealNumber(appa.getL().toDouble())
             if (measuringL2 == -2.0) {
                 controller.tableValuesTest4[1].resistanceInductiveBC.value = "Обрыв"
@@ -205,6 +197,7 @@ class Test4Controller : TestController() {
             sleepWhile(10)
         }
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            prepareAPPAForMeasureL()
             measuringL3 = formatRealNumber(appa.getL().toDouble())
             if (measuringL3 == -2.0) {
                 controller.tableValuesTest4[1].resistanceInductiveCA.value = "Обрыв"
@@ -218,9 +211,26 @@ class Test4Controller : TestController() {
         Log.i("finish", Thread.currentThread().name)
     }
 
+    private fun prepareAPPAForMeasureL() {
+        var attempts = 10
+        while (--attempts > 0 && controller.isExperimentRunning && (!appa.isResponding || appa.getMode() != L_MODE)) {
+            while (!appa.isResponding) {
+                owenPR.onAPPA()
+                sleepWhile(10)
+                appa.getMode()
+                sleepWhile(4)
+            }
+            while (appa.getMode() != L_MODE && appa.isResponding) {
+                owenPR.changeModeAPPA()
+                sleepWhile(4)
+            }
+            sleepWhile(4)
+        }
+    }
+
     private fun sleepWhile(timeSecond: Int) {
         var timer = timeSecond * 10
-        while (controller.isExperimentRunning && timer-- > 0 && controller.isDevicesResponding()) {
+        while (controller.isExperimentRunning && timer-- > 0) {
             sleep(100)
         }
     }
@@ -229,6 +239,9 @@ class Test4Controller : TestController() {
         if (!controller.isDevicesResponding()) {
             controller.tableValuesTest4[1].result.value = "Прервано"
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+        } else if (controller.cause.isNotEmpty()) {
+            controller.tableValuesTest4[1].result.value = "Прервано"
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
         } else if (measuringL1 < testItemL * 0.8 && measuringL1 > testItemL * 1.2
             && measuringL2 < testItemL * 0.8 && measuringL2 > testItemL * 1.2
             && measuringL3 < testItemL * 0.8 && measuringL3 > testItemL * 1.2
@@ -237,17 +250,17 @@ class Test4Controller : TestController() {
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Индуктивности отличаются более, чем на 20%"
             )
-        } else if (measuringL1 < testItemL * 0.8 && measuringL1 > testItemL * 1.2) {
+        } else if (measuringL1 < testItemL * 0.8 || measuringL1 > testItemL * 1.2) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Индуктивность обмотки AB отличается более, чем на 20%"
             )
-        } else if (measuringL2 < testItemL * 0.8 && measuringL2 > testItemL * 1.2) {
+        } else if (measuringL2 < testItemL * 0.8 || measuringL2 > testItemL * 1.2) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Индуктивность обмотки BC отличается более, чем на 20%"
             )
-        } else if (measuringL3 < testItemL * 0.8 && measuringL3 > testItemL * 1.2) {
+        } else if (measuringL3 < testItemL * 0.8 || measuringL3 > testItemL * 1.2) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Индуктивность обмотки CA отличается более, чем на 20%"
@@ -282,9 +295,5 @@ class Test4Controller : TestController() {
         owenPR.offAllKMs()
         CommunicationModel.clearPollingRegisters()
 
-        Platform.runLater {
-            mainView.buttonStart.text = "Запустить"
-            mainView.buttonStart.isDisable = false
-        }
     }
 }

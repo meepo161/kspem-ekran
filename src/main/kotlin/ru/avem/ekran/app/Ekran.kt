@@ -26,9 +26,9 @@ class Ekran : App(MainView::class, Styles::class) {
     }
 
     override fun start(stage: Stage) {
-//        stage.isFullScreen = true
-//        stage.isResizable = false
-//        stage.initStyle(StageStyle.TRANSPARENT)
+        stage.isFullScreen = true
+        stage.isResizable = false
+        stage.initStyle(StageStyle.TRANSPARENT)
         stage.fullScreenExitKeyCombination = KeyCombination.NO_MATCH
         super.start(stage)
         FX.primaryStage.icons += Image("icon.png")

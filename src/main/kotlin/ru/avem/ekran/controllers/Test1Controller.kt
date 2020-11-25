@@ -15,15 +15,14 @@ import tornadofx.add
 import tornadofx.clear
 import tornadofx.style
 import java.text.SimpleDateFormat
+import kotlin.concurrent.thread
 import kotlin.experimental.and
 
 class Test1Controller : TestController() {
-    private lateinit var factoryNumber: String
     val controller: MainViewController by inject()
     val mainView: MainView by inject()
 
     private var logBuffer: String? = null
-    private var cause: String = ""
 
     @Volatile
     var isExperimentEnded: Boolean = true
@@ -58,10 +57,6 @@ class Test1Controller : TestController() {
     @Volatile
     private var platform2: Boolean = false
 
-    fun clearLog() {
-        Platform.runLater { mainView.vBoxLog.clear() }
-    }
-
     private fun appendOneMessageToLog(tag: LogTag, message: String) {
         if (logBuffer == null || logBuffer != message) {
             logBuffer = message
@@ -90,22 +85,28 @@ class Test1Controller : TestController() {
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
-                controller.setCause("Сработала токовая защита")
+                controller.cause = "Сработала токовая защита"
             }
             if (stopButton) {
-                controller.setCause("Нажали кнопку СТОП")
+                controller.cause = "Нажали кнопку СТОП"
             }
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.INSTANT_STATES_REGISTER_2) { value ->
             platform1 = value.toShort() and 4 > 0
             platform2 = value.toShort() and 2 > 0
+            if (mainView.textFieldPlatform.text == "Платформа 1" && !platform1) {
+                controller.cause = "Не закрыта крышка платформы 1"
+            }
+            if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
+                controller.cause = "Не закрыта крышка платформы 2"
+            }
         }
     }
 
     fun startTest() {
+        controller.cause = ""
         testItemR = currentTestItem.xR.toDouble()
         Platform.runLater {
-            mainView.buttonStart.text = "Остановить"
             controller.tableValuesTest1[1].resistanceAB.value = ""
             controller.tableValuesTest1[1].resistanceBC.value = ""
             controller.tableValuesTest1[1].resistanceCA.value = ""
@@ -147,17 +148,8 @@ class Test1Controller : TestController() {
             owenPR.onSound()
 
             appa.getMode()
-            sleepWhile(1)
-            while (!appa.isResponding && controller.isExperimentRunning) {
-                owenPR.onAPPA()
-                sleepWhile(10)
-                appa.getMode()
-                sleepWhile(1)
-            }
-            while (appa.getMode() != R_MODE && controller.isExperimentRunning) {
-                owenPR.changeModeAPPA()
-                sleep(2000)
-            }
+            sleepWhile(4)
+            prepareAPPAForMeasureR()
 
             if (mainView.textFieldPlatform.text == "Платформа 1") {
                 owenPR.onKM11()
@@ -174,6 +166,7 @@ class Test1Controller : TestController() {
         }
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            prepareAPPAForMeasureR()
             measuringR1 = formatRealNumber(appa.getR().toDouble())
             if (measuringR1 == -2.0) {
                 controller.tableValuesTest1[1].resistanceAB.value = "Обрыв"
@@ -189,7 +182,9 @@ class Test1Controller : TestController() {
             owenPR.onKM54()
             sleepWhile(10)
         }
+
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            prepareAPPAForMeasureR()
             measuringR2 = formatRealNumber(appa.getR().toDouble())
             if (measuringR2 == -2.0) {
                 controller.tableValuesTest1[1].resistanceBC.value = "Обрыв"
@@ -206,6 +201,7 @@ class Test1Controller : TestController() {
             sleepWhile(10)
         }
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            prepareAPPAForMeasureR()
             measuringR3 = formatRealNumber(appa.getR().toDouble())
             if (measuringR3 == -2.0) {
                 controller.tableValuesTest1[1].resistanceCA.value = "Обрыв"
@@ -219,9 +215,26 @@ class Test1Controller : TestController() {
         Log.i("finish", Thread.currentThread().name)
     }
 
+    private fun prepareAPPAForMeasureR() {
+        var attempts = 10
+        while (--attempts > 0 && controller.isExperimentRunning && (!appa.isResponding || appa.getMode() != R_MODE)) {
+            while (!appa.isResponding) {
+                owenPR.onAPPA()
+                sleepWhile(10)
+                appa.getMode()
+                sleepWhile(4)
+            }
+            while (appa.getMode() != R_MODE && appa.isResponding) {
+                owenPR.changeModeAPPA()
+                sleepWhile(4)
+            }
+            sleepWhile(4)
+        }
+    }
+
     private fun sleepWhile(timeSecond: Int) {
         var timer = timeSecond * 10
-        while (controller.isExperimentRunning && timer-- > 0 && controller.isDevicesResponding()) {
+        while (controller.isExperimentRunning && timer-- > 0) {
             sleep(100)
         }
     }
@@ -230,6 +243,9 @@ class Test1Controller : TestController() {
         if (!controller.isDevicesResponding()) {
             controller.tableValuesTest1[1].result.value = "Прервано"
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+        } else if (controller.cause.isNotEmpty()) {
+            controller.tableValuesTest1[1].result.value = "Прервано"
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
         } else if (measuringR1 < testItemR * 0.8 && measuringR1 > testItemR * 1.2
             && measuringR2 < testItemR * 0.8 && measuringR2 > testItemR * 1.2
             && measuringR3 < testItemR * 0.8 && measuringR3 > testItemR * 1.2
@@ -238,17 +254,17 @@ class Test1Controller : TestController() {
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Сопротивления отличаются более, чем на 20%"
             )
-        } else if (measuringR1 < testItemR * 0.8 && measuringR1 > testItemR * 1.2) {
+        } else if (measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Сопротивление обмотки AB отличается более, чем на 20%"
             )
-        } else if (measuringR2 < testItemR * 0.8 && measuringR2 > testItemR * 1.2) {
+        } else if (measuringR2 < testItemR * 0.8 || measuringR2 > testItemR * 1.2) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Сопротивление обмотки BC отличается более, чем на 20%"
             )
-        } else if (measuringR3 < testItemR * 0.8 && measuringR3 > testItemR * 1.2) {
+        } else if (measuringR3 < testItemR * 0.8 || measuringR3 > testItemR * 1.2) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Сопротивление обмотки CA отличается более, чем на 20%"
@@ -280,9 +296,5 @@ class Test1Controller : TestController() {
         owenPR.offAllKMs()
         CommunicationModel.clearPollingRegisters()
 
-        Platform.runLater {
-            mainView.buttonStart.text = "Запустить"
-            mainView.buttonStart.isDisable = false
-        }
     }
 }

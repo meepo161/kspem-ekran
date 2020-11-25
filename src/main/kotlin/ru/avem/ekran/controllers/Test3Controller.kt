@@ -26,7 +26,6 @@ class Test3Controller : TestController() {
     val mainView: MainView by inject()
 
     private var logBuffer: String? = null
-    private var cause: String = ""
 
     @Volatile
     var isExperimentEnded: Boolean = true
@@ -86,10 +85,10 @@ class Test3Controller : TestController() {
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
-                controller.setCause("Сработала токовая защита")
+                controller.cause = "Сработала токовая защита"
             }
             if (stopButton) {
-                controller.setCause("Нажали кнопку СТОП")
+                controller.cause = "Нажали кнопку СТОП"
             }
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.INSTANT_STATES_REGISTER_2) { value ->
@@ -97,10 +96,10 @@ class Test3Controller : TestController() {
             platform2 = value.toShort() and 2 > 0
 
             if (mainView.textFieldPlatform.text == "Платформа 1" && !platform1) {
-                controller.setCause("Не закрыта крышка платформы 1")
+                controller.cause = "Не закрыта крышка платформы 1"
             }
             if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
-                controller.setCause("Не закрыта крышка платформы 2")
+                controller.cause = "Не закрыта крышка платформы 2"
             }
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.PV21, Avem7Model.AMPERAGE) { value ->
@@ -115,8 +114,8 @@ class Test3Controller : TestController() {
     }
 
     fun startTest() {
+        controller.cause = ""
         Platform.runLater {
-            mainView.buttonStart.text = "Остановить"
             controller.tableValuesTest3[1].voltage.value = ""
             controller.tableValuesTest3[1].current.value = ""
             controller.tableValuesTest3[1].result.value = ""
@@ -149,6 +148,14 @@ class Test3Controller : TestController() {
         while (!startButton && controller.isExperimentRunning && controller.isDevicesResponding() && timeToStart-- > 0) {
             appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
             sleep(100)
+        }
+
+        if (controller.isExperimentRunning) {
+            appa.getMode()
+            sleep(2000)
+            if (appa.isResponding) {
+                owenPR.onAPPA()
+            }
         }
 
         if (controller.isExperimentRunning) {
@@ -205,6 +212,9 @@ class Test3Controller : TestController() {
             if (!controller.isDevicesResponding()) {
                 controller.tableValuesTest3[1].result.value = "Прервано"
                 appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+            } else if (controller.cause.isNotEmpty()) {
+                controller.tableValuesTest3[1].result.value = "Прервано"
+                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
             } else if (!deltaCP.isResponding) {
                 controller.tableValuesTest3[1].result.value = "Прервано"
                 appendMessageToLog(LogTag.MESSAGE, "Испытание прервано по причине: нет связи с ЧП")
@@ -223,14 +233,13 @@ class Test3Controller : TestController() {
         isExperimentEnded = true
         isDeltaNeed = false
 
+        sleep(2000)
+        owenPR.offKM30()
+        sleep(1000)
         owenPR.onKM33()
         sleep(2000)
         owenPR.offAllKMs()
         CommunicationModel.clearPollingRegisters()
 
-        Platform.runLater {
-            mainView.buttonStart.text = "Запустить"
-            mainView.buttonStart.isDisable = false
-        }
     }
 }

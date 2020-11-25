@@ -4,17 +4,16 @@ import javafx.collections.ObservableList
 import javafx.geometry.Pos
 import org.jetbrains.exposed.sql.transactions.transaction
 import ru.avem.ekran.database.entities.TestObjectsType
-import ru.avem.ekran.utils.Toast
 import ru.avem.ekran.view.ObjectTypeEditorWindow
 import tornadofx.Controller
 import tornadofx.asObservable
 import tornadofx.controlsfx.warningNotification
+import tornadofx.isDouble
 
 class ObjectTypeEditorController : Controller() {
     private val window: ObjectTypeEditorWindow by inject()
-    private val mainView: MainViewController by inject()
 
-    private fun areFieldsValid(): Boolean {
+    fun areFieldsValid(): Boolean {
         if (isValuesEmpty()) {
             warningNotification(
                 "Заполнение полей",
@@ -24,28 +23,19 @@ class ObjectTypeEditorController : Controller() {
             return false
         }
 
-        if (!isValuesInt()) {
+        if (!isValuesNumber()) {
             warningNotification(
                 "Заполнение полей",
-                "Можно вводить только целочисленные значения.Проверьте корректность заполнения полей и повторите снова.",
+                "Неверное значение (не число)",
                 Pos.BOTTOM_CENTER
             )
             return false
         }
 
-        if (!isValuePressureCorrect()) {
+        if (!isValuesCorrect()) {
             warningNotification(
                 "Заполнение полей",
-                "Усилие не может быть меньше 0 кг и больше 600 кг",
-                Pos.BOTTOM_CENTER
-            )
-            return false
-        }
-
-        if (!isValueTimeCorrect()) {
-            warningNotification(
-                "Заполнение полей",
-                "Время не может быть меньше 0",
+                "Значения не могут быть меньше 0",
                 Pos.BOTTOM_CENTER
             )
             return false
@@ -54,39 +44,25 @@ class ObjectTypeEditorController : Controller() {
         return true
     }
 
-    private fun isValuePressureCorrect(): Boolean {
-        return window.textfieldPressure.text.toDouble() <= 600.0 && window.textfieldPressure.text.toDouble() > 0
-    }
+    private fun isValuesCorrect() = window.textfieldXR.text.toString().replace(',', '.').toDouble() > 0 &&
+            window.textfieldXL.text.toString().replace(',', '.').toDouble() > 0 &&
+            window.textfieldXIsolation.text.toString().replace(',', '.').toDouble() > 0
 
-    private fun isValueTimeCorrect(): Boolean {
-        return window.textfieldTime.text.toDouble() > 0
-    }
 
-    private fun isValuesEmpty(): Boolean {
-        return window.textfieldPressure.text.isNullOrEmpty() ||
-                window.textfieldTime.text.isNullOrEmpty()
+    private fun isValuesEmpty() = window.textfieldType.text.isNullOrEmpty() ||
+            window.textfieldXL.text.isNullOrEmpty() ||
+            window.textfieldXIsolation.text.isNullOrEmpty() ||
+            window.textfieldXR.text.isNullOrEmpty()
 
-    }
 
-    private fun isValuesInt(): Boolean {
-        return try {
-            window.textfieldPressure.text.toInt()
-            window.textfieldTime.text.toInt()
-            true
-        } catch (e: Exception) {
-            Toast.makeText("Неверно заполнены поля").show(Toast.ToastType.ERROR)
-            false
-        }
-    }
+    private fun isValuesNumber() = window.textfieldXL.text.toString().replace(',', '.').isDouble() &&
+            window.textfieldXIsolation.text.toString().replace(',', '.').isDouble() &&
+            window.textfieldXR.text.toString().replace(',', '.').isDouble()
+
 
     fun getObjects(): ObservableList<TestObjectsType> {
         return transaction {
-            TestObjectsType.all().toList().asObservable()
+            TestObjectsType.all().toMutableList().asObservable()
         }
-    }
-
-    private fun clearViews() {
-        window.textfieldPressure.clear()
-        window.textfieldTime.clear()
     }
 }

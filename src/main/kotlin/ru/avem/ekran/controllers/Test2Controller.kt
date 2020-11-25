@@ -4,6 +4,8 @@ import javafx.application.Platform
 import javafx.scene.text.Text
 import ru.avem.ekran.communication.model.CommunicationModel
 import ru.avem.ekran.communication.model.devices.bris.m4122.M4122Controller
+import ru.avem.ekran.communication.model.devices.bris.m4122.M4122Controller.Companion.BREAK
+import ru.avem.ekran.communication.model.devices.bris.m4122.M4122Controller.Companion.NOT_RESPONDING
 import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
 import ru.avem.ekran.utils.LogTag
 import ru.avem.ekran.utils.Singleton.currentTestItem
@@ -16,19 +18,13 @@ import java.text.SimpleDateFormat
 import kotlin.experimental.and
 
 class Test2Controller : TestController() {
-
-    private lateinit var factoryNumber: String
     val controller: MainViewController by inject()
     val mainView: MainView by inject()
 
     private var logBuffer: String? = null
-    private var cause: String = ""
 
     @Volatile
     var isExperimentEnded: Boolean = true
-
-    @Volatile
-    private var ikasReadyParam: Float = 0f
 
     @Volatile
     private var measuringR: Double = 0.0
@@ -51,11 +47,18 @@ class Test2Controller : TestController() {
     @Volatile
     private var platform2: Boolean = false
 
-    fun clearLog() {
+    private fun clearLog() {
         Platform.runLater { mainView.vBoxLog.clear() }
     }
 
-    fun appendMessageToLog(tag: LogTag, _msg: String) {
+    private fun appendOneMessageToLog(tag: LogTag, message: String) {
+        if (logBuffer == null || logBuffer != message) {
+            logBuffer = message
+            appendMessageToLog(tag, message)
+        }
+    }
+
+    private fun appendMessageToLog(tag: LogTag, _msg: String) {
         val msg = Text("${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())} | $_msg")
         msg.style {
             fill = when (tag) {
@@ -67,13 +70,6 @@ class Test2Controller : TestController() {
 
         Platform.runLater {
             mainView.vBoxLog.add(msg)
-        }
-    }
-
-    private fun appendOneMessageToLog(tag: LogTag, message: String) {
-        if (logBuffer == null || logBuffer != message) {
-            logBuffer = message
-            appendMessageToLog(tag, message)
         }
     }
 
@@ -103,9 +99,10 @@ class Test2Controller : TestController() {
     }
 
     fun startTest() {
-        testItemR = currentTestItem.resistanceCoil.toDouble()
+        testItemR = currentTestItem.xR.toDouble()
         Platform.runLater {
             mainView.buttonStart.text = "Остановить"
+            controller.tableValuesTest2[1].result.value = ""
         }
 
         controller.isExperimentRunning = true
@@ -127,24 +124,21 @@ class Test2Controller : TestController() {
                 OwenPrModel.RESET_DOG,
                 1.toShort()
             )
-            CommunicationModel.addWritingRegister(
-                CommunicationModel.DeviceID.DD2,
-                OwenPrModel.RESET_DOG,
-                0.toShort()
-            )
             owenPR.initOwenPR()
             startPollDevices()
             sleep(1000)
         }
 
-//            while (!startButton && controller.isExperimentRunning) {
-//                appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
-//                sleep(100)
-//            }
+        var timeToStart = 300
+        while (!startButton && controller.isExperimentRunning && controller.isDevicesResponding() && timeToStart-- > 0) {
+            appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
+            sleep(100)
+        }
 
         if (controller.isExperimentRunning) {
             appendMessageToLog(LogTag.DEBUG, "Подготовка стенда")
             appendMessageToLog(LogTag.DEBUG, "Сбор схемы")
+            owenPR.onSound()
             appendMessageToLog(LogTag.DEBUG, "Подключение контакторов для измерения R")
 
             if (mainView.textFieldPlatform.text == "Платформа 1") {
@@ -152,18 +146,19 @@ class Test2Controller : TestController() {
             } else if (mainView.textFieldPlatform.text == "Платформа 2") {
                 owenPR.onKM42()
             }
-            owenPR.onKM44()
+            owenPR.changeModeAPPA()
         }
 
         if (controller.isExperimentRunning) {
             appendMessageToLog(LogTag.DEBUG, "Измерение R")
             appendMessageToLog(LogTag.DEBUG, "Дождитесь завершения...")
+            bris.resetWatchdog()
             measuringR =
-                bris.setVoltageAndStartMeasuring(1000, M4122Controller.MeasuringType.RESISTANCE).toDouble() / 1000
-            if (measuringR == -2.0) {
-                controller.tableValuesTest2[1].resistanceR.value = "Обрыв"
-            } else {
-                controller.tableValuesTest2[1].resistanceR.value = measuringR.toString()
+                bris.setVoltageAndStartMeasuring(1000, M4122Controller.MeasuringType.RESISTANCE).toDouble()
+            when (measuringR) {
+                BREAK.toDouble() -> controller.tableValuesTest2[1].resistanceR.value = "Обрыв"
+                NOT_RESPONDING.toDouble() -> controller.tableValuesTest2[1].resistanceR.value = "Не отвечает"
+                else -> controller.tableValuesTest2[1].resistanceR.value = (measuringR / 1000).toString()
             }
         }
 
@@ -173,14 +168,17 @@ class Test2Controller : TestController() {
     }
 
     private fun setResult() {
-        if (cause.isNotEmpty()) {
-            controller.tableValuesTest2[1].result.value  = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: $cause")
-        } else if (!controller.isDevicesResponding()) {
-            controller.tableValuesTest2[1].result.value  = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+        if (!controller.isDevicesResponding()) {
+            controller.tableValuesTest2[1].result.value = "Прервано"
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами RS-485")
+        } else if (!bris.isResponding) {
+            controller.tableValuesTest2[1].result.value = "Прервано"
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройством БРИС")
+        } else if (measuringR == BREAK.toDouble()) {
+            controller.tableValuesTest2[1].result.value = "Не годен"
+            appendMessageToLog(LogTag.ERROR, "Испытание неуспешно по причине: Обрыв")
         } else {
-            controller.tableValuesTest2[1].result.value  = "Успешно"
+            controller.tableValuesTest2[1].result.value = "Годен"
             appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")
         }
     }

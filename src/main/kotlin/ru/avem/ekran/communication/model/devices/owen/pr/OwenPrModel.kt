@@ -11,7 +11,6 @@ class OwenPrModel : IDeviceModel {
         const val KMS1_REGISTER = "KMS1_REGISTER"
         const val KMS2_REGISTER = "KMS2_REGISTER"
         const val RESET_DOG = "RESET_DOG"
-        const val RESET_TIMER = "RESET_TIMER"
         const val INSTANT_STATES_REGISTER_2 = "INSTANT_STATES_REGISTER_2"
         const val FIXED_STATES_REGISTER_2 = "FIXED_STATES_REGISTER_2"
     }
@@ -23,7 +22,6 @@ class OwenPrModel : IDeviceModel {
         KMS1_REGISTER to DeviceRegister(515, DeviceRegister.RegisterValueType.SHORT),
         KMS2_REGISTER to DeviceRegister(516, DeviceRegister.RegisterValueType.SHORT),
         RESET_DOG to DeviceRegister(517, DeviceRegister.RegisterValueType.SHORT),
-        RESET_TIMER to DeviceRegister(518, DeviceRegister.RegisterValueType.SHORT),
         INSTANT_STATES_REGISTER_2 to DeviceRegister(520, DeviceRegister.RegisterValueType.SHORT),
         FIXED_STATES_REGISTER_2 to DeviceRegister(521, DeviceRegister.RegisterValueType.SHORT)
     )

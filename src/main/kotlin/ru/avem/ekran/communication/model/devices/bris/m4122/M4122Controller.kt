@@ -33,6 +33,9 @@ class M4122Controller(
         private val WATCHDOG_REQ = byteArrayOf(0x55)
         private val EMPTY_WATCHDOG = byteArrayOf(0x00)
         private val LOCKER = Any()
+
+        val BREAK = -2
+        val NOT_RESPONDING = -3
     }
 
     enum class MeasuringType(var cmd: Byte) {
@@ -63,11 +66,11 @@ class M4122Controller(
             }
 
             when (type) {
-                MeasuringType.RESISTANCE -> loop@ while (true) {
+                MeasuringType.RESISTANCE -> loop@ while (isResponding) {
                     val response = sendRequest(byteArrayOf(0x55), responseSize = 2)
                     when {
                         0x67 in response -> {
-                            return -2 //TODO возможно обрыв
+                            return BREAK //TODO возможно обрыв
                         }
                         0x5B in response -> {
                             val values = sendRequest(byteArrayOf(0x5C, 0x55), responseSize = 12)
@@ -84,10 +87,11 @@ class M4122Controller(
                     }
                 }
                 else -> {
-                    return -1
+                    error("Не реализовано еще")
                 }
             }
         }
+        return NOT_RESPONDING
     }
 
     private fun convertToBytes(voltage: Short) =
@@ -95,12 +99,14 @@ class M4122Controller(
 
     private fun sendRequest(request: ByteArray, sleepMills: Long = 200, responseSize: Int = 255): ByteArray {
         if (protocolAdapter.write(request /*, request.size.toLong()*/) == -1) {
-            throw SerialPortIOException("Error while write data to port $PRODUCT_NAME")
+//            throw SerialPortIOException("Error while write data to port $PRODUCT_NAME")
+            isResponding = false
         }
         sleep(sleepMills)
         val response = ByteArray(responseSize)
         if (protocolAdapter.read(response/*, response.size.toLong()*/) == -1) {
-            throw SerialPortIOException("Error while read data from port $PRODUCT_NAME")
+//            throw SerialPortIOException("Error while read data from port $PRODUCT_NAME")
+            isResponding = false
         }
         return response
     }

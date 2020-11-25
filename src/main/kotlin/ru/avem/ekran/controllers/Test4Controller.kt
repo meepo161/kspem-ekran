@@ -4,18 +4,13 @@ package ru.avem.ekran.controllers
 import javafx.application.Platform
 import javafx.scene.text.Text
 import ru.avem.ekran.communication.model.CommunicationModel
-import ru.avem.ekran.communication.model.devices.avem.avem4.Avem4Model
-import ru.avem.ekran.communication.model.devices.avem.avem7.Avem7Model
-import ru.avem.ekran.communication.model.devices.bris.m4122.M4122Controller
+import ru.avem.ekran.communication.model.devices.ohmmeter.APPAController.Companion.L_MODE
 import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
-import ru.avem.ekran.utils.LogTag
-import ru.avem.ekran.utils.formatRealNumber
-import ru.avem.ekran.utils.sleep
+import ru.avem.ekran.utils.*
 import ru.avem.ekran.view.MainView
 import tornadofx.add
 import tornadofx.style
 import java.text.SimpleDateFormat
-import kotlin.concurrent.thread
 import kotlin.experimental.and
 
 class Test4Controller : TestController() {
@@ -24,7 +19,6 @@ class Test4Controller : TestController() {
     val mainView: MainView by inject()
 
     private var logBuffer: String? = null
-    private var cause: String = ""
 
     @Volatile
     var isExperimentEnded: Boolean = true
@@ -33,10 +27,16 @@ class Test4Controller : TestController() {
     private var ikasReadyParam: Float = 0f
 
     @Volatile
-    private var measuringU: Double = 0.0
+    private var measuringL1: Double = 0.0
 
     @Volatile
-    private var measuringI: Double = 0.0
+    private var testItemL: Double = 0.0
+
+    @Volatile
+    private var measuringL2: Double = 0.0
+
+    @Volatile
+    private var measuringL3: Double = 0.0
 
     @Volatile
     private var currentVIU: Boolean = false
@@ -52,6 +52,13 @@ class Test4Controller : TestController() {
 
     @Volatile
     private var platform2: Boolean = false
+
+    private fun appendOneMessageToLog(tag: LogTag, message: String) {
+        if (logBuffer == null || logBuffer != message) {
+            logBuffer = message
+            appendMessageToLog(tag, message)
+        }
+    }
 
     fun appendMessageToLog(tag: LogTag, _msg: String) {
         val msg = Text("${SimpleDateFormat("HH:mm:ss").format(System.currentTimeMillis())} | $_msg")
@@ -92,64 +99,123 @@ class Test4Controller : TestController() {
                 controller.setCause("Не закрыта крышка платформы 2")
             }
         }
-        CommunicationModel.startPoll(CommunicationModel.DeviceID.PV21, Avem7Model.AMPERAGE) { value ->
-            measuringI = formatRealNumber(value.toDouble() * 5)
-        }
-        CommunicationModel.startPoll(CommunicationModel.DeviceID.PV24, Avem4Model.RMS_VOLTAGE) { value ->
-            measuringU = formatRealNumber(value.toDouble())
-        }
     }
 
     fun startTest() {
-        thread(isDaemon = true) {
-            Platform.runLater {
-                mainView.buttonStart.text = "Остановить"
-            }
-
-            controller.isExperimentRunning = true
-            isExperimentEnded = false
-
-            if (controller.isExperimentRunning) {
-                appendMessageToLog(LogTag.DEBUG, "Инициализация устройств")
-            }
-
-            while (!controller.isDevicesResponding() && controller.isExperimentRunning) {
-                CommunicationModel.checkDevices()
-                sleep(100)
-            }
-
-            if (controller.isExperimentRunning) {
-                CommunicationModel.addWritingRegister(
-                    CommunicationModel.DeviceID.DD2,
-                    OwenPrModel.RESET_DOG,
-                    1.toShort()
-                )
-                CommunicationModel.addWritingRegister(
-                    CommunicationModel.DeviceID.DD2,
-                    OwenPrModel.RESET_DOG,
-                    0.toShort()
-                )
-                owenPR.initOwenPR()
-                startPollDevices()
-                sleep(1000)
-            }
-
-//            while (!startButton && controller.isExperimentRunning) {
-//                appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
-//                sleep(100)
-//            }
-
-            val R = bris.setVoltageAndStartMeasuring(type = M4122Controller.MeasuringType.RESISTANCE).toDouble()
-            if (R == -1.0) {
-                controller.tableValuesTest5[0].resistanceR.value = "Вне диапазона"
-            } else {
-                controller.tableValuesTest5[0].resistanceR.value = "${R / 1000} МОм"
-            }
-
-            setResult()
-
-            finalizeExperiment()
+        testItemL = Singleton.currentTestItem.xL.toDouble()
+        Platform.runLater {
+            mainView.buttonStart.text = "Остановить"
+            controller.tableValuesTest4[1].resistanceInductiveAB.value = ""
+            controller.tableValuesTest4[1].resistanceInductiveBC.value = ""
+            controller.tableValuesTest4[1].resistanceInductiveCA.value = ""
+            controller.tableValuesTest4[1].result.value = ""
         }
+
+        controller.isExperimentRunning = true
+        isExperimentEnded = false
+
+        if (controller.isExperimentRunning) {
+            appendMessageToLog(LogTag.DEBUG, "Инициализация устройств")
+        }
+
+        while (!controller.isDevicesResponding() && controller.isExperimentRunning) {
+            CommunicationModel.checkDevices()
+            sleep(100)
+        }
+
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            CommunicationModel.addWritingRegister(
+                CommunicationModel.DeviceID.DD2,
+                OwenPrModel.RESET_DOG,
+                1.toShort()
+            )
+            owenPR.initOwenPR()
+            startPollDevices()
+            sleep(1000)
+        }
+
+        var timeToStart = 300
+        while (!startButton && controller.isExperimentRunning && controller.isDevicesResponding() && timeToStart-- > 0) {
+            appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
+            sleep(100)
+        }
+
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            appendMessageToLog(LogTag.DEBUG, "Подготовка стенда")
+            appendMessageToLog(LogTag.DEBUG, "Сбор схемы")
+            owenPR.onSound()
+
+            appa.getMode()
+            sleepWhile(1)
+            while (!appa.isResponding && controller.isExperimentRunning) {
+                owenPR.onAPPA()
+                sleepWhile(10)
+                appa.getMode()
+                sleepWhile(1)
+            }
+            while (appa.getMode() != L_MODE && controller.isExperimentRunning) {
+                owenPR.changeModeAPPA()
+                sleep(2000)
+            }
+
+            if (mainView.textFieldPlatform.text == "Платформа 1") {
+                owenPR.onKM11()
+            } else if (mainView.textFieldPlatform.text == "Платформа 2") {
+                owenPR.onKM12()
+            }
+        }
+
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            appendMessageToLog(LogTag.DEBUG, "Подключение контакторов для измерения R AB")
+            owenPR.onKM51()
+            owenPR.onKM53()
+            sleepWhile(10)
+        }
+
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            measuringL1 = formatRealNumber(appa.getL().toDouble())
+            if (measuringL1 == -2.0) {
+                controller.tableValuesTest4[1].resistanceInductiveAB.value = "Обрыв"
+            } else {
+                controller.tableValuesTest4[1].resistanceInductiveAB.value = measuringL1.toString()
+            }
+        }
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            appendMessageToLog(LogTag.DEBUG, "Подключение контакторов для измерения R BC")
+            owenPR.offKM51()
+            owenPR.offKM53()
+            owenPR.onKM52()
+            owenPR.onKM54()
+            sleepWhile(10)
+        }
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            measuringL2 = formatRealNumber(appa.getL().toDouble())
+            if (measuringL2 == -2.0) {
+                controller.tableValuesTest4[1].resistanceInductiveBC.value = "Обрыв"
+            } else {
+                controller.tableValuesTest4[1].resistanceInductiveBC.value = measuringL2.toString()
+            }
+        }
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            appendMessageToLog(LogTag.DEBUG, "Подключение контакторов для измерения R CA")
+            owenPR.offKM52()
+            owenPR.offKM54()
+            owenPR.onKM51()
+            owenPR.onKM54()
+            sleepWhile(10)
+        }
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            measuringL3 = formatRealNumber(appa.getL().toDouble())
+            if (measuringL3 == -2.0) {
+                controller.tableValuesTest4[1].resistanceInductiveCA.value = "Обрыв"
+            } else {
+                controller.tableValuesTest4[1].resistanceInductiveCA.value = measuringL3.toString()
+            }
+        }
+        setResult()
+
+        finalizeExperiment()
+        Log.i("finish", Thread.currentThread().name)
     }
 
     private fun sleepWhile(timeSecond: Int) {
@@ -160,14 +226,49 @@ class Test4Controller : TestController() {
     }
 
     private fun setResult() {
-        if (cause.isNotEmpty()) {
-            controller.tableValuesTest3[1].result.value = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: $cause")
-        } else if (!controller.isDevicesResponding()) {
-            controller.tableValuesTest3[1].result.value = "Прервано"
+        if (!controller.isDevicesResponding()) {
+            controller.tableValuesTest4[1].result.value = "Прервано"
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+        } else if (measuringL1 < testItemL * 0.8 && measuringL1 > testItemL * 1.2
+            && measuringL2 < testItemL * 0.8 && measuringL2 > testItemL * 1.2
+            && measuringL3 < testItemL * 0.8 && measuringL3 > testItemL * 1.2
+        ) {
+            controller.tableValuesTest4[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Индуктивности отличаются более, чем на 20%"
+            )
+        } else if (measuringL1 < testItemL * 0.8 && measuringL1 > testItemL * 1.2) {
+            controller.tableValuesTest4[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Индуктивность обмотки AB отличается более, чем на 20%"
+            )
+        } else if (measuringL2 < testItemL * 0.8 && measuringL2 > testItemL * 1.2) {
+            controller.tableValuesTest4[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Индуктивность обмотки BC отличается более, чем на 20%"
+            )
+        } else if (measuringL3 < testItemL * 0.8 && measuringL3 > testItemL * 1.2) {
+            controller.tableValuesTest4[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Индуктивность обмотки CA отличается более, чем на 20%"
+            )
+        } else if (measuringL1 == -2.0) {
+            controller.tableValuesTest4[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Обрыв обмотки AB"
+            )
+        } else if (measuringL2 == -2.0) {
+            controller.tableValuesTest4[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Обрыв обмотки BC"
+            )
+        } else if (measuringL3 == -2.0) {
+            controller.tableValuesTest4[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Обрыв обмотки CA"
+            )
         } else {
-            controller.tableValuesTest3[1].result.value = "Успешно"
+            controller.tableValuesTest4[1].result.value = "Годен"
             appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")
         }
     }

@@ -5,6 +5,7 @@ import ru.avem.ekran.communication.adapters.utils.ModbusRegister
 import ru.avem.ekran.communication.model.DeviceRegister
 import ru.avem.ekran.communication.model.IDeviceController
 import ru.avem.ekran.communication.utils.TransportException
+import ru.avem.ekran.utils.sleep
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.experimental.and
@@ -126,8 +127,6 @@ class OwenPrController(
 
 
     fun initOwenPR() {
-        writeRegister(getRegisterById(OwenPrModel.RESET_TIMER), 0)
-        writeRegister(getRegisterById(OwenPrModel.RESET_TIMER), 1)
         writeRegister(getRegisterById(OwenPrModel.RES_REGISTER), 1)
     }
 
@@ -164,8 +163,11 @@ class OwenPrController(
         onBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 7)
     }
 
-    fun onLight() {
+    fun onAPPA() {
+        offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
         onBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
+        sleep(100)
+        offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
     }
 
     fun onKM1() {
@@ -192,8 +194,11 @@ class OwenPrController(
         onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 6)
     }
 
-    fun onKM44() {
+    fun changeModeAPPA() {
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 7)
         onBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 7)
+        sleep(100)
+        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 7)
     }
 
     fun onKM30() {
@@ -228,10 +233,6 @@ class OwenPrController(
         offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 7)
     }
 
-    fun offLight() {
-        offBitInRegister(getRegisterById(OwenPrModel.KMS1_REGISTER), 8)
-    }
-
     fun offKM1() {
         offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 1)
     }
@@ -254,10 +255,6 @@ class OwenPrController(
 
     fun offKM33() {
         offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 6)
-    }
-
-    fun offKM44() {
-        offBitInRegister2(getRegisterById(OwenPrModel.KMS2_REGISTER), 7)
     }
 
     fun offKM30() {

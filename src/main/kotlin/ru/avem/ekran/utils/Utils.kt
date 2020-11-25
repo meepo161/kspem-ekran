@@ -178,3 +178,8 @@ fun String?.toIntOrNullByFormatter() = when {
     startsWith("0b") -> trim().replaceFirst("0b", "").toIntOrNull(2)
     else -> trim().toIntOrNull()
 }
+
+fun callKeyBoard() {
+    Desktop.getDesktop()
+        .open(Paths.get("C:/Program Files/Common Files/Microsoft Shared/ink/TabTip.exe").toFile())
+}

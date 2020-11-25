@@ -94,74 +94,81 @@ class DeltaController(
 
 
     fun startObject() {
-        protocolAdapter.presetMultipleRegisters(
-            id,
-            getRegisterById(CONTROL_REGISTER).address,
-            listOf(ModbusRegister(0b10))
-        )
+        transactionWithAttempts {
+            protocolAdapter.presetMultipleRegisters(
+                id,
+                getRegisterById(CONTROL_REGISTER).address,
+                listOf(ModbusRegister(0b10))
+            )
+        }
     }
 
     fun stopObject() {
-        protocolAdapter.presetMultipleRegisters(
-            id,
-            getRegisterById(CONTROL_REGISTER).address,
-            listOf(ModbusRegister(0b1))
-        )
+        transactionWithAttempts {
+            protocolAdapter.presetMultipleRegisters(
+                id,
+                getRegisterById(CONTROL_REGISTER).address,
+                listOf(ModbusRegister(0b1))
+            )
+        }
     }
 
     fun setObjectParams(fOut: Short, voltageP1: Short, fP1: Short) {
-        try {
+        transactionWithAttempts {
             protocolAdapter.presetMultipleRegisters(
                 id,
                 getRegisterById(POINT_1_VOLTAGE_REGISTER).address,
                 listOf(ModbusRegister(voltageP1))
             )
+        }
+        transactionWithAttempts {
             protocolAdapter.presetMultipleRegisters(
                 id,
                 getRegisterById(POINT_1_FREQUENCY_REGISTER).address,
                 listOf(ModbusRegister(fP1))
             )
+        }
+        transactionWithAttempts {
             protocolAdapter.presetMultipleRegisters(
                 id,
                 getRegisterById(CURRENT_FREQUENCY_OUTPUT_REGISTER).address,
                 listOf(ModbusRegister(fOut))
             )
+        }
+        transactionWithAttempts {
             protocolAdapter.presetMultipleRegisters(
                 id,
                 getRegisterById(MAX_VOLTAGE_REGISTER).address,
                 listOf(ModbusRegister(52 * 10))
             )
+        }
+        transactionWithAttempts {
             protocolAdapter.presetMultipleRegisters(
                 id,
                 getRegisterById(MAX_FREQUENCY_REGISTER).address,
                 listOf(ModbusRegister(50 * 100))
             )
+        }
+        transactionWithAttempts {
             protocolAdapter.presetMultipleRegisters(
                 id,
                 getRegisterById(NOM_FREQUENCY_REGISTER).address,
                 listOf(ModbusRegister(50 * 100))
             )
+        }
+        transactionWithAttempts {
             protocolAdapter.presetMultipleRegisters(
                 id,
                 getRegisterById(POINT_2_VOLTAGE_REGISTER).address,
                 listOf(ModbusRegister(40))
             )
+        }
+        transactionWithAttempts {
             protocolAdapter.presetMultipleRegisters(
                 id,
                 getRegisterById(POINT_2_FREQUENCY_REGISTER).address,
                 listOf(ModbusRegister(50))
             )
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
-
-    fun setObjectUMax(voltageMax: Short) {
-        protocolAdapter.presetMultipleRegisters(
-            id,
-            getRegisterById(POINT_1_VOLTAGE_REGISTER).address,
-            listOf(ModbusRegister(voltageMax))
-        )
-    }
-
 }

@@ -3,7 +3,6 @@ package ru.avem.ekran.communication.model.devices.ohmmeter
 import ru.avem.ekran.communication.adapters.serial.SerialAdapter
 import ru.avem.ekran.communication.model.DeviceRegister
 import ru.avem.ekran.communication.model.IDeviceController
-import ru.avem.ekran.communication.model.devices.ohmmeter.APPAModel.Companion.MODE_PARAM
 import ru.avem.ekran.communication.model.devices.ohmmeter.APPAModel.Companion.RESISTANCE_PARAM
 import ru.avem.ekran.communication.utils.TransportException
 import ru.avem.ekran.utils.Log
@@ -18,6 +17,9 @@ class APPAController(
 ) : IDeviceController {
     val model = APPAModel()
     override var isResponding = false
+        set(value) {
+            field = value
+        }
     override var requestTotalCount = 0
     override var requestSuccessCount = 0
     override val pollingRegisters = mutableListOf<DeviceRegister>()
@@ -35,28 +37,26 @@ class APPAController(
     }
 
     override fun readRegister(register: DeviceRegister) {
-        transactionWithAttempts {
-            val outputBuffer = ByteBuffer.allocate(5)
-                .put(0x55.toByte())
-                .put(0x55.toByte())
-                .put(0x00.toByte())
-                .put(0x00.toByte())
-                .put(0xAA.toByte())
-            var status = false
-            protocolAdapter.write(outputBuffer.array())
-            val inputArray = ByteArray(40)
-            val finalBuffer = ByteBuffer.allocate(40)
-            var attempt = 0
-            do {
-                sleep(2)
-                val frameSize: Int = protocolAdapter.read(inputArray)
-                if (frameSize != -1) {
-                    finalBuffer.put(inputArray, 0, frameSize)
-                }
-            } while (finalBuffer.position() < 17 && ++attempt < 10)
-            Log.i("TAG", "bytes: " + Arrays.toString(finalBuffer.array()))
-            analyzeResponse(finalBuffer.array())
-        }
+        val outputBuffer = ByteBuffer.allocate(5)
+            .put(0x55.toByte())
+            .put(0x55.toByte())
+            .put(0x00.toByte())
+            .put(0x00.toByte())
+            .put(0xAA.toByte())
+        protocolAdapter.write(outputBuffer.array())
+        val inputArray = ByteArray(40)
+        val finalBuffer = ByteBuffer.allocate(40)
+        var attempt = 0
+        do {
+            sleep(2)
+            val frameSize: Int = protocolAdapter.read(inputArray)
+            if (frameSize != -1) {
+                finalBuffer.put(inputArray, 0, frameSize)
+            }
+        } while (finalBuffer.position() < 17 && ++attempt < 10)
+        isResponding = finalBuffer.position() == 17
+        Log.i("TAG", "bytes: " + Arrays.toString(finalBuffer.array()))
+        analyzeResponse(finalBuffer.array())
     }
 
     private fun analyzeResponse(array: ByteArray) {
@@ -86,10 +86,20 @@ class APPAController(
             4 -> result /= 10000f
         }
         when (MScope.toInt() and 0xF8 shr 3) {
-            0 -> result *= 0f
-            1 -> result *= 1f
-            2 -> result *= 1000f
-            3 -> result *= 1000000f
+            0 -> result = -77f       // null
+            1 -> result *= 1f        // Ω
+            2 -> result *= 1000f     // kΩ
+            3 -> result *= 1000000f  // MΩ
+            4 -> result /= 1000000f  // nH
+            5 -> result /= 1000f     // uH
+            6 -> result /= 1f        // mH
+            7 -> result *= 1000f     // H
+            8 -> result /= 1000000f  // pF
+            9 -> result /= 1000f     // nF
+            10 -> result /= 1f       // uF
+            11 -> result *= 1000f    // mF
+            12 -> result             // %
+            13 -> result             // °
         }
         return result
     }
@@ -117,9 +127,8 @@ class APPAController(
 
     override fun getRegisterById(idRegister: String) = model.getRegisterById(idRegister)
 
-
     fun getMode(): Byte {
-        readRegister(getRegisterById(MODE_PARAM))
+        readRegister(getRegisterById(RESISTANCE_PARAM))
         return response.mode
     }
 

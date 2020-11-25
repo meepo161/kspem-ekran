@@ -6,24 +6,20 @@ import org.jetbrains.exposed.dao.IntEntityClass
 import org.jetbrains.exposed.dao.IntIdTable
 
 object ObjectsTypes:  IntIdTable() {
-    val serialNumber = varchar("serialNumber", 32)
-    val resistanceCoil = varchar("resistanceCoil1", 32)
-    val resistanceContactGroup = varchar("resistanceContactGroup", 32)
-    val voltageMin = varchar("voltageMin", 32)
-    val voltageMax = varchar("voltageMax", 32)
-    val timeOff = varchar("timeOff", 32)
+    val testType = varchar("serialNumber", 32)
+    val xR = varchar("xR", 32)
+    val rIsolation = varchar("rIsolation", 32)
+    val xL = varchar("xL", 32)
 }
 
 class TestObjectsType(id: EntityID<Int>): IntEntity(id) {
     companion object : IntEntityClass<TestObjectsType>(ObjectsTypes)
-    var serialNumber by ObjectsTypes.serialNumber
-    var resistanceCoil by ObjectsTypes.resistanceCoil
-    var resistanceContactGroup by ObjectsTypes.resistanceContactGroup
-    var voltageMin by ObjectsTypes.voltageMin
-    var voltageMax by ObjectsTypes.voltageMax
-    var timeOff by ObjectsTypes.timeOff
+    var testType by ObjectsTypes.testType
+    var xR by ObjectsTypes.xR
+    var rIsolation by ObjectsTypes.rIsolation
+    var xL by ObjectsTypes.xL
 
     override fun toString(): String {
-        return serialNumber
+        return testType
     }
 }

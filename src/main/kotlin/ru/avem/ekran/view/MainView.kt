@@ -1,5 +1,6 @@
 package ru.avem.ekran.view
 
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.geometry.Pos
 import javafx.scene.control.*
@@ -16,10 +17,12 @@ import ru.avem.ekran.database.entities.TestObjectsType
 import ru.avem.ekran.entities.*
 import ru.avem.ekran.view.Styles.Companion.megaHard
 import tornadofx.*
+import java.awt.event.ItemEvent
+import java.awt.event.ItemListener
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.swing.GroupLayout
 import kotlin.system.exitProcess
+
 
 class MainView : View("Комплексный стенд проверки электрических машин") {
     override val configPath: Path = Paths.get("./app.conf")
@@ -56,8 +59,14 @@ class MainView : View("Комплексный стенд проверки эле
     var checkBoxTest3: CheckBox by singleAssign()
     var checkBoxTest4: CheckBox by singleAssign()
     var checkBoxTest5: CheckBox by singleAssign()
+    var firstStart = true
 
     var test1Modal: Stage = Stage()
+
+    private val value1 = SimpleBooleanProperty()
+    private val value2 = SimpleBooleanProperty()
+    private val value3 = SimpleBooleanProperty()
+    private var manualChanged = false
 
     companion object {
         private val logger = LoggerFactory.getLogger(MainView::class.java)
@@ -73,8 +82,8 @@ class MainView : View("Комплексный стенд проверки эле
     }
 
     override fun onDock() {
-        controller.refreshObjectsTypes()
         comboBoxTestItem.selectionModel.selectFirst()
+        controller.refreshObjectsTypes()
     }
 
     override val root = borderpane {
@@ -124,6 +133,9 @@ class MainView : View("Комплексный стенд проверки эле
                         label("Тип двигателя:")
                         comboBoxTestItem = combobox {
                             prefWidth = 320.0
+                            setOnAction {
+                                controller.refreshTable()
+                            }
                         }
                         label("Место:")
                         textFieldPlatform = textfield {
@@ -141,8 +153,10 @@ class MainView : View("Комплексный стенд проверки эле
                             alignmentProperty().set(Pos.CENTER_LEFT)
                             checkBoxTest1 =
                                 checkbox("1. Сопротивление обмоток постоянному току") {
-//                                    bind(checkBoxIntBind)
-                                }.addClass(Styles.extraHard)
+                                    selectedProperty().onChange {
+                                        value3.value = it && value2.value
+                                    }
+                                }.apply { bind(value1) }.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest1) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
@@ -158,6 +172,7 @@ class MainView : View("Комплексный стенд проверки эле
                             }
 
                             checkBoxTest2 = checkbox("2. Сопротивление изоляции") {}.addClass(Styles.extraHard)
+
                             tableview(controller.tableValuesTest2) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
@@ -171,7 +186,7 @@ class MainView : View("Комплексный стенд проверки эле
                             }
 
                             checkBoxTest3 =
-                                checkbox("3. Электрическая прочность изоляции") {}.addClass(Styles.extraHard)
+                                checkbox("3. Электрическая прочность изоляции") { }.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest3) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
@@ -187,7 +202,12 @@ class MainView : View("Комплексный стенд проверки эле
                         }
                         vbox(spacing = 16.0) {
                             alignmentProperty().set(Pos.CENTER_LEFT)
-                            checkBoxTest4 = checkbox("4. Межвитковые замыкания, обрывы") {}.addClass(Styles.extraHard)
+                            checkBoxTest4 =
+                                checkbox("4. Межвитковые замыкания, обрывы") {
+                                    selectedProperty().onChange {
+                                        value3.value = it && value1.value
+                                    }
+                                }.apply { bind(value2) }.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest4) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
@@ -196,13 +216,30 @@ class MainView : View("Комплексный стенд проверки эле
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
                                 column("", TableValuesTest4::descriptor.getter)
-                                column("AB, Ом", TableValuesTest4::resistanceInductiveAB.getter)
-                                column("BC, Ом", TableValuesTest4::resistanceInductiveBC.getter)
-                                column("CA, Ом", TableValuesTest4::resistanceInductiveCA.getter)
+                                column("AB, мH", TableValuesTest4::resistanceInductiveAB.getter)
+                                column("BC, мH", TableValuesTest4::resistanceInductiveBC.getter)
+                                column("CA, мH", TableValuesTest4::resistanceInductiveCA.getter)
                                 column("Результат", TableValuesTest4::result.getter)
                             }
 
-                            checkBoxTest5 = checkbox("5. Правильность соединения обмоток") {}.addClass(Styles.extraHard)
+                            checkBoxTest5 =
+                                checkbox("5. Правильность соединения обмоток") {
+                                    setOnMouseClicked {
+                                        if (checkBoxTest5.isSelected) {
+                                            value1.value = true
+                                            value2.value = true
+                                        } else {
+                                            value1.value = false
+                                            value2.value = false
+                                        }
+                                    }
+                                    selectedProperty().onChange {
+                                        if (it) {
+                                            value1.value = it
+                                            value2.value = it
+                                        }
+                                    }
+                                }.apply { bind(value3) }.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest5) {
                                 minHeight = 146.0
                                 maxHeight = 146.0
@@ -267,17 +304,15 @@ class MainView : View("Комплексный стенд проверки эле
                     marginBottom = 8.0
                 }
             }
-            lightButton = button("Включить освещение") {
-                action {
-                    text = if (text == "Включить освещение") {
-                        controller.onLight()
-                        "Отключить освещение"
-                    } else {
-                        controller.offLight()
-                        "Включить освещение"
-                    }
-                }
-            }
         }
     }.addClass(Styles.blueTheme, megaHard)
+
+    internal class ItemChangeListener : ItemListener {
+        var mainView = MainView()
+        override fun itemStateChanged(event: ItemEvent) {
+            if (event.stateChange == ItemEvent.SELECTED) {
+                val item = event.item
+            }
+        }
+    }
 }

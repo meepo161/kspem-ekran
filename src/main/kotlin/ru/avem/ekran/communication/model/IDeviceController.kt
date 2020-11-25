@@ -3,6 +3,7 @@ package ru.avem.ekran.communication.model
 import mu.KotlinLogging
 import ru.avem.ekran.communication.adapters.Adapter
 import ru.avem.ekran.communication.utils.TransportException
+import ru.avem.ekran.utils.sleep
 
 interface IDeviceController {
     val name: String
@@ -62,11 +63,8 @@ interface IDeviceController {
                 val message =
                     "repeat $attempt/${connection.attemptCount} attempts with common success rate = ${(requestSuccessCount) * 100 / requestTotalCount}%"
                 KotlinLogging.logger(name).info(message)
-
-                if (attempt == connection.attemptCount) {
-                    throw TransportException(message)
-                }
             }
+            sleep(1)
         }
     }
 

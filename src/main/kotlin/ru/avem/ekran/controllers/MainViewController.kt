@@ -14,7 +14,10 @@ import ru.avem.ekran.utils.State
 import ru.avem.ekran.utils.Toast
 import ru.avem.ekran.utils.sleep
 import ru.avem.ekran.view.MainView
-import tornadofx.*
+import tornadofx.asObservable
+import tornadofx.observableListOf
+import tornadofx.runLater
+import tornadofx.selectedItem
 import kotlin.concurrent.thread
 import kotlin.experimental.and
 
@@ -22,9 +25,8 @@ import kotlin.experimental.and
 class MainViewController : TestController() {
     val view: MainView by inject()
     var position1 = ""
-    var maskTests = 0
 
-    var tableValuesTest1 = observableList(
+    var tableValuesTest1 = observableListOf(
         TableValuesTest1(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -41,7 +43,7 @@ class MainViewController : TestController() {
         )
     )
 
-    var tableValuesTest2 = observableList(
+    var tableValuesTest2 = observableListOf(
         TableValuesTest2(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -54,7 +56,7 @@ class MainViewController : TestController() {
             SimpleStringProperty("")
         )
     )
-    var tableValuesTest3 = observableList(
+    var tableValuesTest3 = observableListOf(
         TableValuesTest3(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -70,7 +72,7 @@ class MainViewController : TestController() {
         )
     )
 
-    var tableValuesTest4 = observableList(
+    var tableValuesTest4 = observableListOf(
         TableValuesTest4(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -88,7 +90,7 @@ class MainViewController : TestController() {
         )
     )
 
-    var tableValuesTest5 = observableList(
+    var tableValuesTest5 = observableListOf(
         TableValuesTest5(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -104,27 +106,6 @@ class MainViewController : TestController() {
         )
     )
 
-    var tableValuesTest6 = observableList(
-        TableValuesTest6(
-            SimpleStringProperty("Заданные"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("")
-        ),
-
-        TableValuesTest6(
-            SimpleStringProperty("Измеренные"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("0.0"),
-            SimpleStringProperty("")
-        )
-    )
-
-    private var logBuffer: String? = null
     private var cause: String = ""
 
     @Volatile
@@ -156,21 +137,6 @@ class MainViewController : TestController() {
                 OwenPrModel.RESET_DOG,
                 1.toShort()
             )
-            CommunicationModel.addWritingRegister(
-                CommunicationModel.DeviceID.DD2,
-                OwenPrModel.RESET_DOG,
-                0.toShort()
-            )
-            CommunicationModel.addWritingRegister(
-                CommunicationModel.DeviceID.DD2,
-                OwenPrModel.RESET_TIMER,
-                0.toShort()
-            )
-            CommunicationModel.addWritingRegister(
-                CommunicationModel.DeviceID.DD2,
-                OwenPrModel.RESET_TIMER,
-                1.toShort()
-            )
             owenPR.initOwenPR()
             owenPR.resetKMS()
             startPollDevices()
@@ -194,8 +160,8 @@ class MainViewController : TestController() {
         }
     }
 
-    fun isDevicesResponding(): Boolean {
-        return owenPR.isResponding
+    var isDevicesResponding: () -> Boolean = {
+        true
     }
 
     private fun startPollDevices() {
@@ -239,13 +205,7 @@ class MainViewController : TestController() {
     }
 
     fun handleStartTest() {
-        Singleton.currentTestItem = transaction {
-            TestObjectsType.find {
-                ObjectsTypes.id eq view.comboBoxTestItem.selectedItem!!.id
-            }.toList().observable()
-        }.first()
-
-        thread(isDaemon = true) {
+        if (view.buttonStart.text == "Запустить") {
             if (view.comboBoxTestItem.selectionModel.isEmpty) {
                 runLater {
                     Toast.makeText("Выберите объект испытания").show(Toast.ToastType.WARNING)
@@ -254,22 +214,50 @@ class MainViewController : TestController() {
                 runLater {
                     Toast.makeText("Выберите хотя бы одно испытание из списка").show(Toast.ToastType.WARNING)
                 }
+            } else {
+                Singleton.currentTestItem = transaction {
+                    TestObjectsType.find {
+                        ObjectsTypes.id eq view.comboBoxTestItem.selectedItem!!.id
+                    }.toList().asObservable()
+                }.first()
+                view.buttonStart.text = "Остановить"
+                thread(isDaemon = true) {
+                    if (view.checkBoxTest1.isSelected) {
+                        isDevicesResponding = {
+                            owenPR.isResponding || bris.isResponding
+                        }
+                        Test1Controller().startTest()
+                    }
+                    if (view.checkBoxTest2.isSelected) {
+                        isDevicesResponding = {
+                            owenPR.isResponding
+                        }
+                        Test2Controller().startTest()
+                    }
+                    if (view.checkBoxTest3.isSelected) {
+                        isDevicesResponding = {
+                            owenPR.isResponding || deltaCP.isResponding || avem4.isResponding || avem7.isResponding
+                        }
+                        Test3Controller().startTest()
+                    }
+                    if (view.checkBoxTest4.isSelected) {
+                        isDevicesResponding = {
+                            owenPR.isResponding
+                        }
+                        Test4Controller().startTest()
+                    }
+                    if (view.checkBoxTest5.isSelected) {
+                        isDevicesResponding = {
+                            owenPR.isResponding
+                        }
+                        Test5Controller().startTest()
+                    }
+                }
+                view.buttonStart.text = "Запустить"
             }
-            if (view.checkBoxTest1.isSelected && isExperimentRunning) {
-                Test1Controller().startTest()
-            }
-            if (view.checkBoxTest2.isSelected) {
-                Test2Controller().startTest()
-            }
-            if (view.checkBoxTest3.isSelected) {
-                Test3Controller().startTest()
-            }
-            if (view.checkBoxTest4.isSelected) {
-                Test4Controller().startTest()
-            }
-            if (view.checkBoxTest5.isSelected) {
-                Test5Controller().startTest()
-            }
+        } else {
+            isExperimentRunning = false
+            view.buttonStart.text = "Запустить"
         }
     }
 
@@ -290,17 +278,28 @@ class MainViewController : TestController() {
         view.comboBoxTestItem.selectionModel.select(selectedIndex)
     }
 
+    fun refreshTable() {
+        runLater {
+            tableValuesTest1[0].resistanceAB.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xR
+            tableValuesTest1[0].resistanceBC.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xR
+            tableValuesTest1[0].resistanceCA.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xR
+            tableValuesTest1[0].result.value = ""
+            tableValuesTest2[0].resistanceR.value = view.comboBoxTestItem.selectionModel.selectedItem!!.rIsolation
+            tableValuesTest2[0].result.value = ""
+            tableValuesTest3[0].voltage.value = "500.0"
+            tableValuesTest3[0].current.value = "5.0"
+            tableValuesTest3[0].result.value = ""
+            tableValuesTest4[0].resistanceInductiveAB.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xL
+            tableValuesTest4[0].resistanceInductiveBC.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xL
+            tableValuesTest4[0].resistanceInductiveCA.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xL
+            tableValuesTest4[0].result.value = ""
+            tableValuesTest5[0].resistanceR.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xR
+            tableValuesTest5[0].resistanceL.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xL
+            tableValuesTest5[0].result.value = ""
+        }
+    }
+
     fun showAboutUs() {
         Toast.makeText("Версия ПО: 1.0.0\nВерсия БСУ: 1.0.0\nДата: 30.04.2020").show(Toast.ToastType.INFORMATION)
-    }
-
-    fun onLight() {
-        owenPR.onLight()
-        owenPR.onSound()
-    }
-
-    fun offLight() {
-        owenPR.offLight()
-        owenPR.offSound()
     }
 }

@@ -32,30 +32,24 @@ fun validateDB() {
 
             if (TestObjectsType.all().count() < 1) {
                 TestObjectsType.new {
-                    serialNumber = "111111"
-                    resistanceCoil = "0.1"
-                    resistanceContactGroup = "0.2"
-                    voltageMin = "0.3"
-                    voltageMax = "0.4"
-                    timeOff = "0.5"
+                    testType = "111111"
+                    xR = "0.1"
+                    xL = "0.3"
+                    rIsolation = "0.34"
                 }
 
                 TestObjectsType.new {
-                    serialNumber = "222222"
-                    resistanceCoil = "1.1"
-                    resistanceContactGroup = "1.2"
-                    voltageMin = "1.3"
-                    voltageMax = "1.4"
-                    timeOff = "1.5"
+                    testType = "222222"
+                    xR = "1.1"
+                    xL = "1.3"
+                    rIsolation = "0.45"
                 }
 
                 TestObjectsType.new {
-                    serialNumber = "3333333"
-                    resistanceCoil = "2.1"
-                    resistanceContactGroup = "2.2"
-                    voltageMin = "2.3"
-                    voltageMax = "2.4"
-                    timeOff = "2.5"
+                    testType = "3333333"
+                    xR = "2.1"
+                    xL = "2.3"
+                    rIsolation = "0.51"
                 }
             }
         }

@@ -5,17 +5,16 @@ import javafx.scene.text.Text
 import ru.avem.ekran.communication.model.CommunicationModel
 import ru.avem.ekran.communication.model.devices.ohmmeter.APPAController.Companion.R_MODE
 import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
-import ru.avem.ekran.utils.Log
 import ru.avem.ekran.utils.LogTag
 import ru.avem.ekran.utils.Singleton.currentTestItem
+import ru.avem.ekran.utils.Toast
 import ru.avem.ekran.utils.formatRealNumber
 import ru.avem.ekran.utils.sleep
 import ru.avem.ekran.view.MainView
 import tornadofx.add
-import tornadofx.clear
+import tornadofx.runLater
 import tornadofx.style
 import java.text.SimpleDateFormat
-import kotlin.concurrent.thread
 import kotlin.experimental.and
 
 class Test1Controller : TestController() {
@@ -81,7 +80,7 @@ class Test1Controller : TestController() {
 
     private fun startPollDevices() {
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.FIXED_STATES_REGISTER_1) { value ->
-            currentVIU = value.toShort() and 1 > 0
+            currentVIU = value.toShort() and 16 > 0
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
@@ -136,10 +135,19 @@ class Test1Controller : TestController() {
             sleep(1000)
         }
 
+        if (!startButton && controller.isExperimentRunning && controller.isDevicesResponding()) {
+            runLater {
+                Toast.makeText("Нажмите кнопку ПУСК").show(Toast.ToastType.WARNING)
+            }
+        }
         var timeToStart = 300
         while (!startButton && controller.isExperimentRunning && controller.isDevicesResponding() && timeToStart-- > 0) {
             appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
             sleep(100)
+        }
+
+        if (!startButton) {
+            controller.cause = "Не нажата кнопка ПУСК"
         }
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
@@ -162,7 +170,7 @@ class Test1Controller : TestController() {
             appendMessageToLog(LogTag.DEBUG, "Подключение контакторов для измерения R AB")
             owenPR.onKM51()
             owenPR.onKM53()
-            sleepWhile(10)
+            sleepWhile(6)
         }
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
@@ -180,7 +188,7 @@ class Test1Controller : TestController() {
             owenPR.offKM53()
             owenPR.onKM52()
             owenPR.onKM54()
-            sleepWhile(10)
+            sleepWhile(6)
         }
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
@@ -198,7 +206,7 @@ class Test1Controller : TestController() {
             owenPR.offKM54()
             owenPR.onKM51()
             owenPR.onKM54()
-            sleepWhile(10)
+            sleepWhile(6)
         }
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
             prepareAPPAForMeasureR()
@@ -209,10 +217,14 @@ class Test1Controller : TestController() {
                 controller.tableValuesTest1[1].resistanceCA.value = measuringR3.toString()
             }
         }
+
+        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+            owenPR.onAPPA()
+        }
+
         setResult()
 
         finalizeExperiment()
-        Log.i("finish", Thread.currentThread().name)
     }
 
     private fun prepareAPPAForMeasureR() {
@@ -220,15 +232,15 @@ class Test1Controller : TestController() {
         while (--attempts > 0 && controller.isExperimentRunning && (!appa.isResponding || appa.getMode() != R_MODE)) {
             while (!appa.isResponding) {
                 owenPR.onAPPA()
-                sleepWhile(10)
+                sleepWhile(6)
                 appa.getMode()
-                sleepWhile(4)
+                sleepWhile(2)
             }
             while (appa.getMode() != R_MODE && appa.isResponding) {
                 owenPR.changeModeAPPA()
-                sleepWhile(4)
+                sleepWhile(2)
             }
-            sleepWhile(4)
+            sleepWhile(2)
         }
     }
 
@@ -246,13 +258,34 @@ class Test1Controller : TestController() {
         } else if (controller.cause.isNotEmpty()) {
             controller.tableValuesTest1[1].result.value = "Прервано"
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
-        } else if (measuringR1 < testItemR * 0.8 && measuringR1 > testItemR * 1.2
-            && measuringR2 < testItemR * 0.8 && measuringR2 > testItemR * 1.2
-            && measuringR3 < testItemR * 0.8 && measuringR3 > testItemR * 1.2
+        } else if ((measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2)
+            && (measuringR2 < testItemR * 0.8 || measuringR2 > testItemR * 1.2)
+            && (measuringR3 < testItemR * 0.8 || measuringR3 > testItemR * 1.2)
         ) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
                 LogTag.ERROR, "Результат: Сопротивления отличаются более, чем на 20%"
+            )
+        } else if ((measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2)
+            && (measuringR2 < testItemR * 0.8 || measuringR2 > testItemR * 1.2)
+        ) {
+            controller.tableValuesTest1[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Сопротивления AB и BC отличаются более, чем на 20%"
+            )
+        } else if ((measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2)
+            && (measuringR3 < testItemR * 0.8 || measuringR3 > testItemR * 1.2)
+        ) {
+            controller.tableValuesTest1[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Сопротивления AB и BC отличаются более, чем на 20%"
+            )
+        } else if ((measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2)
+            && (measuringR2 < testItemR * 0.8 || measuringR2 > testItemR * 1.2)
+        ) {
+            controller.tableValuesTest1[1].result.value = "Не годен"
+            appendMessageToLog(
+                LogTag.ERROR, "Результат: Сопротивления AB и CA отличаются более, чем на 20%"
             )
         } else if (measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2) {
             controller.tableValuesTest1[1].result.value = "Не годен"

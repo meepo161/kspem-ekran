@@ -9,6 +9,7 @@ import ru.avem.ekran.communication.model.devices.avem.avem7.Avem7Model
 import ru.avem.ekran.communication.model.devices.delta.DeltaModel
 import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
 import ru.avem.ekran.utils.LogTag
+import ru.avem.ekran.utils.Toast
 import ru.avem.ekran.utils.formatRealNumber
 import ru.avem.ekran.utils.sleep
 import ru.avem.ekran.view.MainView
@@ -81,7 +82,7 @@ class Test3Controller : TestController() {
 
     private fun startPollDevices() {
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.FIXED_STATES_REGISTER_1) { value ->
-            currentVIU = value.toShort() and 1 > 0
+            currentVIU = value.toShort() and 16 > 0
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
@@ -103,7 +104,7 @@ class Test3Controller : TestController() {
             }
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.PV21, Avem7Model.AMPERAGE) { value ->
-            measuringI = formatRealNumber(value.toDouble() * 5)
+            measuringI = formatRealNumber(value.toDouble() * (1.toDouble() / 5.toDouble()))
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.PV24, Avem4Model.RMS_VOLTAGE) { value ->
             measuringU = formatRealNumber(value.toDouble())
@@ -143,11 +144,19 @@ class Test3Controller : TestController() {
             startPollDevices()
             sleep(1000)
         }
-
+        if (!startButton && controller.isExperimentRunning && controller.isDevicesResponding()) {
+            runLater {
+                Toast.makeText("Нажмите кнопку ПУСК").show(Toast.ToastType.WARNING)
+            }
+        }
         var timeToStart = 300
         while (!startButton && controller.isExperimentRunning && controller.isDevicesResponding() && timeToStart-- > 0) {
             appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
             sleep(100)
+        }
+
+        if (!startButton) {
+            controller.cause = "Не нажата кнопка ПУСК"
         }
 
         if (controller.isExperimentRunning) {
@@ -157,7 +166,6 @@ class Test3Controller : TestController() {
             owenPR.onKM30()
             appendMessageToLog(LogTag.DEBUG, "Сбор схемы")
             owenPR.onSound()
-            appendMessageToLog(LogTag.DEBUG, "Подключение контакторов для измерения R")
 
             if (mainView.textFieldPlatform.text == "Платформа 1") {
                 owenPR.onKM31()
@@ -171,16 +179,19 @@ class Test3Controller : TestController() {
             sleepWhile(8)
             deltaCP.setObjectParams(50 * 100, 49 * 10, 50 * 100)
             deltaCP.startObject()
+            sleep(1000)
             appendMessageToLog(LogTag.DEBUG, "Дождитесь 15 секунд до завершения...")
             var timer = 15
-            logger.debug("while (controller.isExperimentRunning && timer-- > 0 && controller.isDevicesResponding())")
             while (controller.isExperimentRunning && timer-- > 0 && controller.isDevicesResponding()) {
-                logger.debug("appendMessageToLog(LogTag.DEBUG, \"Осталось $timer секунд...\")")
                 appendMessageToLog(LogTag.DEBUG, "Осталось $timer секунд...")
+                if (timer < 12 && (measuringU * 0.5 > 500 || measuringU * 1.5 < 500)) {
+                    controller.cause = "Необходимое напряжение не удалось выставить"
+                }
+                if (timer < 12 && measuringI > 20) {
+                    controller.cause = "Ток превысил 20 мА"
+                }
                 runLater {
-                    logger.debug("controller.tableValuesTest3[1].current.value = measuringI.toString()")
                     controller.tableValuesTest3[1].current.value = measuringI.toString()
-                    logger.debug("controller.tableValuesTest3[1].voltage.value = measuringU.toString()")
                     controller.tableValuesTest3[1].voltage.value = measuringU.toString()
                 }
                 sleep(1000)
@@ -204,12 +215,12 @@ class Test3Controller : TestController() {
             if (!controller.isDevicesResponding()) {
                 controller.tableValuesTest3[1].result.value = "Прервано"
                 appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
-            } else if (controller.cause.isNotEmpty()) {
-                controller.tableValuesTest3[1].result.value = "Прервано"
-                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
             } else if (!deltaCP.isResponding) {
                 controller.tableValuesTest3[1].result.value = "Прервано"
                 appendMessageToLog(LogTag.MESSAGE, "Испытание прервано по причине: нет связи с ЧП")
+            } else if (controller.cause.isNotEmpty()) {
+                controller.tableValuesTest3[1].result.value = "Не годен"
+                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
             } else if (currentVIU) {
                 controller.tableValuesTest3[1].result.value = "Не годен"
                 appendMessageToLog(LogTag.MESSAGE, "Испытание неупешно по причине: пробой изоляции")

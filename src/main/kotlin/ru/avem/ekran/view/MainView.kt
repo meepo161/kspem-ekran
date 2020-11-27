@@ -4,13 +4,11 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.geometry.Pos
 import javafx.scene.control.*
-import javafx.scene.image.Image
 import javafx.scene.image.ImageView
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.scene.shape.Circle
 import javafx.stage.Modality
-import javafx.stage.Stage
 import org.slf4j.LoggerFactory
 import ru.avem.ekran.controllers.MainViewController
 import ru.avem.ekran.database.entities.TestObjectsType
@@ -51,7 +49,6 @@ class MainView : View("Комплексный стенд проверки эле
     var checkBoxTest3: CheckBox by singleAssign()
     var checkBoxTest4: CheckBox by singleAssign()
     var checkBoxTest5: CheckBox by singleAssign()
-
     private val value1 = SimpleBooleanProperty()
     private val value2 = SimpleBooleanProperty()
     private val value3 = SimpleBooleanProperty()
@@ -310,13 +307,4 @@ class MainView : View("Комплексный стенд проверки эле
             }
         }
     }.addClass(Styles.blueTheme, megaHard)
-
-    internal class ItemChangeListener : ItemListener {
-        var mainView = MainView()
-        override fun itemStateChanged(event: ItemEvent) {
-            if (event.stateChange == ItemEvent.SELECTED) {
-                val item = event.item
-            }
-        }
-    }
 }

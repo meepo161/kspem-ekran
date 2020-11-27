@@ -9,9 +9,11 @@ import ru.avem.ekran.communication.model.devices.bris.m4122.M4122Controller.Comp
 import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
 import ru.avem.ekran.utils.LogTag
 import ru.avem.ekran.utils.Singleton.currentTestItem
+import ru.avem.ekran.utils.Toast
 import ru.avem.ekran.utils.sleep
 import ru.avem.ekran.view.MainView
 import tornadofx.add
+import tornadofx.runLater
 import tornadofx.style
 import java.text.SimpleDateFormat
 import kotlin.experimental.and
@@ -70,7 +72,7 @@ class Test2Controller : TestController() {
 
     private fun startPollDevices() {
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.FIXED_STATES_REGISTER_1) { value ->
-            currentVIU = value.toShort() and 1 > 0
+            currentVIU = value.toShort() and 16 > 0
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
@@ -95,7 +97,7 @@ class Test2Controller : TestController() {
 
     fun startTest() {
         controller.cause = ""
-        testItemR = currentTestItem.xR.toDouble()
+        testItemR = currentTestItem.rIsolation.toDouble()
         Platform.runLater {
             controller.tableValuesTest2[1].result.value = ""
         }
@@ -122,11 +124,19 @@ class Test2Controller : TestController() {
             startPollDevices()
             sleep(1000)
         }
-
+        if (!startButton && controller.isExperimentRunning && controller.isDevicesResponding()) {
+            runLater {
+                Toast.makeText("Нажмите кнопку ПУСК").show(Toast.ToastType.WARNING)
+            }
+        }
         var timeToStart = 300
         while (!startButton && controller.isExperimentRunning && controller.isDevicesResponding() && timeToStart-- > 0) {
             appendOneMessageToLog(LogTag.DEBUG, "Нажмите кнопку ПУСК")
             sleep(100)
+        }
+
+        if (!startButton) {
+            controller.cause = "Не нажата кнопка ПУСК"
         }
 
         if (controller.isExperimentRunning) {
@@ -150,6 +160,7 @@ class Test2Controller : TestController() {
                 bris.resetWatchdog()
                 sleep(2000)
             }
+
             if (bris.isResponding) {
                 measuringR =
                     bris.setVoltageAndStartMeasuring(1000, M4122Controller.MeasuringType.RESISTANCE).toDouble()
@@ -181,6 +192,9 @@ class Test2Controller : TestController() {
         } else if (measuringR == BREAK.toDouble()) {
             controller.tableValuesTest2[1].result.value = "Не годен"
             appendMessageToLog(LogTag.ERROR, "Испытание неуспешно по причине: Обрыв")
+        } else if (measuringR < testItemR) {
+            controller.tableValuesTest1[1].result.value = "Не годен"
+            appendMessageToLog(LogTag.ERROR, "Результат: Сопротивление меньше, чем заданное")
         } else {
             controller.tableValuesTest2[1].result.value = "Годен"
             appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")

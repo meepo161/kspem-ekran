@@ -4,6 +4,7 @@ package ru.avem.ekran.controllers
 import javafx.application.Platform
 import javafx.scene.text.Text
 import ru.avem.ekran.utils.LogTag
+import ru.avem.ekran.utils.Toast
 import ru.avem.ekran.utils.sleep
 import ru.avem.ekran.view.MainView
 import tornadofx.add
@@ -96,8 +97,14 @@ class Test5Controller : TestController() {
     private fun setResult() {
         if (controller.tableValuesTest1[1].result.value == "Не годен" || controller.tableValuesTest4[1].result.value == "Не годен") {
             controller.tableValuesTest5[1].result.value = "Не годен"
+            runLater {
+                Toast.makeText("Не годен").show(Toast.ToastType.ERROR)
+            }
         } else if (controller.tableValuesTest1[1].result.value == "Годен" && controller.tableValuesTest4[1].result.value == "Годен") {
             controller.tableValuesTest5[1].result.value = "Годен"
+            runLater {
+                Toast.makeText("Не годен").show(Toast.ToastType.INFORMATION)
+            }
         } else {
             controller.tableValuesTest5[1].result.value = "Неизвестно"
         }

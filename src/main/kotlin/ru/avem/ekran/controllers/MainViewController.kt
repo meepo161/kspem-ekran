@@ -25,7 +25,7 @@ class MainViewController : TestController() {
     val controller: MainViewController by inject()
     var position1 = ""
 
-    var tableValuesTest1 = observableListOf(
+    var tableValuesTest1 = observableList(
         TableValuesTest1(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -42,7 +42,7 @@ class MainViewController : TestController() {
         )
     )
 
-    var tableValuesTest2 = observableListOf(
+    var tableValuesTest2 = observableList(
         TableValuesTest2(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -55,7 +55,7 @@ class MainViewController : TestController() {
             SimpleStringProperty("")
         )
     )
-    var tableValuesTest3 = observableListOf(
+    var tableValuesTest3 = observableList(
         TableValuesTest3(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -71,7 +71,7 @@ class MainViewController : TestController() {
         )
     )
 
-    var tableValuesTest4 = observableListOf(
+    var tableValuesTest4 = observableList(
         TableValuesTest4(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -89,7 +89,7 @@ class MainViewController : TestController() {
         )
     )
 
-    var tableValuesTest5 = observableListOf(
+    var tableValuesTest5 = observableList(
         TableValuesTest5(
             SimpleStringProperty("Заданные"),
             SimpleStringProperty("0.0"),
@@ -108,6 +108,7 @@ class MainViewController : TestController() {
     var cause: String = ""
         set(value) {
             isExperimentRunning = false
+            isStopped = true
             field = value
         }
 
@@ -125,6 +126,9 @@ class MainViewController : TestController() {
 
     @Volatile
     private var stopButton: Boolean = false
+
+    @Volatile
+    private var isStopped: Boolean = false
 
     @Volatile
     private var platform1: Boolean = false
@@ -172,7 +176,7 @@ class MainViewController : TestController() {
 
     private fun startPollDevices() {
         CommunicationModel.startPoll(CommunicationModel.DeviceID.DD2, OwenPrModel.FIXED_STATES_REGISTER_1) { value ->
-            currentVIU = value.toShort() and 1 > 0
+            currentVIU = value.toShort() and 16 > 0
             startButton = value.toShort() and 64 > 0
             stopButton = value.toShort() and 128 > 0
             if (currentVIU) {
@@ -189,15 +193,15 @@ class MainViewController : TestController() {
             runLater {
                 when {
                     platform1 -> {
-                        view.textFieldPlatform.removeClass(Styles.redTextField)
+                        view.textFieldPlatform.removeClass(Styles.redText)
                         view.textFieldPlatform.text = "Платформа 1"
                     }
                     platform2 -> {
-                        view.textFieldPlatform.removeClass(Styles.redTextField)
+                        view.textFieldPlatform.removeClass(Styles.redText)
                         view.textFieldPlatform.text = "Платформа 2"
                     }
                     else -> {
-                        view.textFieldPlatform.addClass(Styles.redTextField)
+                        view.textFieldPlatform.addClass(Styles.redText)
                         view.textFieldPlatform.text = "Закройте крышку платформы"
                     }
                 }
@@ -218,9 +222,10 @@ class MainViewController : TestController() {
             Singleton.currentTestItem = transaction {
                 TestObjectsType.find {
                     ObjectsTypes.id eq view.comboBoxTestItem.selectedItem!!.id
-                }.toList().asObservable()
+                }.toList().observable()
             }.first()
             thread(isDaemon = true) {
+                isStopped = false
                 runLater {
                     view.buttonStart.isDisable = true
                     view.buttonStop.isDisable = false
@@ -299,7 +304,7 @@ class MainViewController : TestController() {
     fun refreshObjectsTypes() {
         val selectedIndex = view.comboBoxTestItem.selectionModel.selectedIndex
         view.comboBoxTestItem.items = transaction {
-            TestObjectsType.all().toList().asObservable()
+            TestObjectsType.all().toList().observable()
         }
         view.comboBoxTestItem.selectionModel.select(selectedIndex)
     }
@@ -313,7 +318,7 @@ class MainViewController : TestController() {
             tableValuesTest2[0].resistanceR.value = view.comboBoxTestItem.selectionModel.selectedItem!!.rIsolation
             tableValuesTest2[0].result.value = ""
             tableValuesTest3[0].voltage.value = "500.0"
-            tableValuesTest3[0].current.value = "5.0"
+            tableValuesTest3[0].current.value = "20.0"
             tableValuesTest3[0].result.value = ""
             tableValuesTest4[0].resistanceInductiveAB.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xL
             tableValuesTest4[0].resistanceInductiveBC.value = view.comboBoxTestItem.selectionModel.selectedItem!!.xL

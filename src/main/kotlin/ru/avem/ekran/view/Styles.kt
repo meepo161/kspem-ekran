@@ -9,7 +9,8 @@ class Styles : Stylesheet() {
     companion object {
         val lineChart by cssclass()
         val pressure by cssclass()
-        val redTextField by cssclass()
+        val redText by cssclass()
+        val greenText by cssclass()
         val blueTheme by cssclass()
         val medium by cssclass()
         val hard by cssclass()
@@ -52,8 +53,14 @@ class Styles : Stylesheet() {
             textFill = c("#ff3000")
             fontWeight = FontWeight.EXTRA_BOLD
         }
-        redTextField {
+
+        redText {
             backgroundColor += c("#FF0000")
+            textFill = c("#FFFFFF")
+        }
+
+        greenText {
+            backgroundColor += c("#00FF00")
             textFill = c("#FFFFFF")
         }
 

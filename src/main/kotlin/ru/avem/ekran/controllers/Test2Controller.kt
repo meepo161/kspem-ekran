@@ -92,6 +92,9 @@ class Test2Controller : TestController() {
             if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
                 controller.cause = "Не закрыта крышка платформы 2"
             }
+            if (platform1 && platform2) {
+                controller.cause = "Ошибка в работе концевиков"
+            }
         }
     }
 

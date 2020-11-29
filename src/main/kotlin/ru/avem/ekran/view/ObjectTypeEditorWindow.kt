@@ -26,8 +26,8 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
     private val mainController: MainViewController by inject()
 
     override val root = anchorpane {
-        prefWidth = 1300.0
-        prefHeight = 700.0
+        prefWidth = 1200.0
+        prefHeight = 600.0
         vbox(spacing = 16.0) {
             anchorpaneConstraints {
                 leftAnchor = 16.0

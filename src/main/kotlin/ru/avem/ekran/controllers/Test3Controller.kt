@@ -102,6 +102,9 @@ class Test3Controller : TestController() {
             if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
                 controller.cause = "Не закрыта крышка платформы 2"
             }
+            if (platform1 && platform2) {
+                controller.cause = "Ошибка в работе концевиков"
+            }
         }
         CommunicationModel.startPoll(CommunicationModel.DeviceID.PV21, Avem7Model.AMPERAGE) { value ->
             measuringI = formatRealNumber(value.toDouble() * (1.toDouble() / 5.toDouble()))
@@ -216,13 +219,13 @@ class Test3Controller : TestController() {
                 appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
             } else if (!deltaCP.isResponding) {
                 controller.tableValuesTest3[1].result.value = "Прервано"
-                appendMessageToLog(LogTag.MESSAGE, "Испытание прервано по причине: нет связи с ЧП")
+                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: нет связи с ЧП")
             } else if (controller.cause.isNotEmpty()) {
                 controller.tableValuesTest3[1].result.value = "Не годен"
                 appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
             } else if (currentVIU) {
                 controller.tableValuesTest3[1].result.value = "Не годен"
-                appendMessageToLog(LogTag.MESSAGE, "Испытание неупешно по причине: пробой изоляции")
+                appendMessageToLog(LogTag.ERROR, "Испытание неупешно по причине: пробой изоляции")
             } else {
                 controller.tableValuesTest3[1].result.value = "Годен"
                 appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")

@@ -99,6 +99,9 @@ class Test1Controller : TestController() {
             if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
                 controller.cause = "Не закрыта крышка платформы 2"
             }
+            if (platform1 && platform2) {
+                controller.cause = "Ошибка в работе концевиков"
+            }
         }
     }
 
@@ -149,7 +152,7 @@ class Test1Controller : TestController() {
             owenPR.onSound()
 
             appa.getMode()
-            sleepWhile(4)
+            sleepWhile(6)
             prepareAPPAForMeasureR()
 
             if (mainView.textFieldPlatform.text == "Платформа 1") {
@@ -211,9 +214,9 @@ class Test1Controller : TestController() {
             }
         }
 
-        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
-            owenPR.onAPPA()
-        }
+//        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+//            owenPR.onAPPA()
+//        }
 
         setResult()
 
@@ -227,13 +230,13 @@ class Test1Controller : TestController() {
                 owenPR.onAPPA()
                 sleepWhile(10)
                 appa.getMode()
-                sleepWhile(4)
+                sleepWhile(1)
             }
             while (appa.getMode() != R_MODE && appa.isResponding && controller.isExperimentRunning) {
                 owenPR.changeModeAPPA()
-                sleepWhile(4)
+                sleepWhile(1)
             }
-            sleepWhile(4)
+            sleepWhile(1)
         }
     }
 

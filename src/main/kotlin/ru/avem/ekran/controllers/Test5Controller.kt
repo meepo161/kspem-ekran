@@ -102,7 +102,7 @@ class Test5Controller : TestController() {
         } else if (controller.tableValuesTest1[1].result.value == "Годен" && controller.tableValuesTest4[1].result.value == "Годен") {
             controller.tableValuesTest5[1].result.value = "Годен"
             runLater {
-                Toast.makeText("Не годен").show(Toast.ToastType.INFORMATION)
+                Toast.makeText("Годен").show(Toast.ToastType.INFORMATION)
             }
         } else {
             controller.tableValuesTest5[1].result.value = "Неизвестно"

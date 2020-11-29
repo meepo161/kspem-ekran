@@ -193,18 +193,23 @@ class MainViewController : TestController() {
             platform2 = value.toShort() and 2 > 0
 //            view.buttonStart.isDisable = !platform1 && !platform2
             runLater {
-                when {
-                    platform1 -> {
-                        view.textFieldPlatform.removeClass(Styles.redText)
-                        view.textFieldPlatform.text = "Платформа 1"
-                    }
-                    platform2 -> {
-                        view.textFieldPlatform.removeClass(Styles.redText)
-                        view.textFieldPlatform.text = "Платформа 2"
-                    }
-                    else -> {
-                        view.textFieldPlatform.addClass(Styles.redText)
-                        view.textFieldPlatform.text = "Закройте крышку платформы"
+                if (platform1 && platform2) {
+                    view.textFieldPlatform.addClass(Styles.redText)
+                    view.textFieldPlatform.text = "Ошибка концевиков"
+                } else {
+                    when {
+                        platform1 -> {
+                            view.textFieldPlatform.removeClass(Styles.redText)
+                            view.textFieldPlatform.text = "Платформа 1"
+                        }
+                        platform2 -> {
+                            view.textFieldPlatform.removeClass(Styles.redText)
+                            view.textFieldPlatform.text = "Платформа 2"
+                        }
+                        else -> {
+                            view.textFieldPlatform.addClass(Styles.redText)
+                            view.textFieldPlatform.text = "Закройте крышку платформы"
+                        }
                     }
                 }
             }
@@ -230,37 +235,55 @@ class MainViewController : TestController() {
                 runLater {
                     view.buttonStart.isDisable = true
                     view.buttonStop.isDisable = false
+                    view.mainMenubar.isDisable = true
+                    view.comboBoxTestItem.isDisable = true
+                    view.buttonSelectAll.isDisable = true
                 }
                 clearTable()
                 CommunicationModel.clearPollingRegisters()
                 isExperimentRunning = true
-                if (view.checkBoxTest1.isSelected) {
-                    isDevicesResponding = {
-                        owenPR.isResponding
-                    }
-                    Test1Controller().startTest()
-                }
                 if (view.checkBoxTest2.isSelected && isExperimentRunning) {
                     isDevicesResponding = {
                         owenPR.isResponding
                     }
+                    runLater {
+                        view.checkBoxTest2.isDisable = true
+                    }
                     Test2Controller().startTest()
                 }
-                if (view.checkBoxTest3.isSelected && isExperimentRunning) {
+                if (view.checkBoxTest1.isSelected && isExperimentRunning) {
                     isDevicesResponding = {
-                        owenPR.isResponding || deltaCP.isResponding || avem4.isResponding || avem7.isResponding
+                        owenPR.isResponding
                     }
-                    Test3Controller().startTest()
+                    runLater {
+                        view.checkBoxTest1.isDisable = true
+                    }
+                    Test1Controller().startTest()
                 }
                 if (view.checkBoxTest4.isSelected && isExperimentRunning) {
                     isDevicesResponding = {
                         owenPR.isResponding
                     }
+                    runLater {
+                        view.checkBoxTest4.isDisable = true
+                    }
                     Test4Controller().startTest()
+                }
+                if (view.checkBoxTest3.isSelected && isExperimentRunning) {
+                    isDevicesResponding = {
+                        owenPR.isResponding || deltaCP.isResponding || avem4.isResponding || avem7.isResponding
+                    }
+                    runLater {
+                        view.checkBoxTest3.isDisable = true
+                    }
+                    Test3Controller().startTest()
                 }
                 if (view.checkBoxTest5.isSelected && isExperimentRunning) {
                     isDevicesResponding = {
                         owenPR.isResponding
+                    }
+                    runLater {
+                        view.checkBoxTest5.isDisable = true
                     }
                     Test5Controller().startTest()
                 }
@@ -271,6 +294,14 @@ class MainViewController : TestController() {
                 runLater {
                     view.buttonStart.isDisable = false
                     view.buttonStop.isDisable = true
+                    view.mainMenubar.isDisable = false
+                    view.comboBoxTestItem.isDisable = false
+                    view.buttonSelectAll.isDisable = false
+                    view.checkBoxTest1.isDisable = false
+                    view.checkBoxTest2.isDisable = false
+                    view.checkBoxTest3.isDisable = false
+                    view.checkBoxTest4.isDisable = false
+                    view.checkBoxTest5.isDisable = false
                 }
             }
         }

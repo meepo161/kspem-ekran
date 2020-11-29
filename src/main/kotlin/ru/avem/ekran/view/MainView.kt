@@ -15,8 +15,6 @@ import ru.avem.ekran.database.entities.TestObjectsType
 import ru.avem.ekran.entities.*
 import ru.avem.ekran.view.Styles.Companion.megaHard
 import tornadofx.*
-import java.awt.event.ItemEvent
-import java.awt.event.ItemListener
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.system.exitProcess
@@ -31,6 +29,8 @@ class MainView : View("Комплексный стенд проверки эле
     var comIndicate: Circle by singleAssign()
     var vBoxLog: VBox by singleAssign()
 
+    var coefDisplay = 1.5
+
     val checkBoxIntBind = SimpleIntegerProperty() //TODO переименовать нормально
 
     private var addIcon = ImageView("ru/avem/ekran/icon/add.png")
@@ -44,6 +44,7 @@ class MainView : View("Комплексный стенд проверки эле
 
     var buttonStart: Button by singleAssign()
     var buttonStop: Button by singleAssign()
+    var buttonSelectAll: Button by singleAssign()
     var checkBoxTest1: CheckBox by singleAssign()
     var checkBoxTest2: CheckBox by singleAssign()
     var checkBoxTest3: CheckBox by singleAssign()
@@ -72,6 +73,8 @@ class MainView : View("Комплексный стенд проверки эле
     }
 
     override val root = borderpane {
+        maxWidth = 1280.0
+        maxHeight = 800.0
         top {
             mainMenubar = menubar {
                 menu("Меню") {
@@ -104,16 +107,16 @@ class MainView : View("Комплексный стенд проверки эле
         }
         center {
             anchorpane {
-                vbox(spacing = 32.0) {
+                vbox(spacing = 32.0 / coefDisplay) {
                     anchorpaneConstraints {
-                        leftAnchor = 16.0
-                        rightAnchor = 16.0
-                        topAnchor = 16.0
-                        bottomAnchor = 16.0
+                        leftAnchor = 16.0 / coefDisplay
+                        rightAnchor = 16.0 / coefDisplay
+                        topAnchor = 16.0 / coefDisplay
+                        bottomAnchor = 16.0 / coefDisplay
                     }
                     alignmentProperty().set(Pos.CENTER)
 
-                    hbox(spacing = 64.0) {
+                    hbox(spacing = 16.0) {
                         alignmentProperty().set(Pos.CENTER)
                         label("Тип двигателя:") {}.addClass(Styles.extraHard)
                         comboBoxTestItem = combobox {
@@ -129,9 +132,9 @@ class MainView : View("Комплексный стенд проверки эле
                             prefWidth = 320.0
                         }.addClass(Styles.extraHard)
                     }.addClass(Styles.extraHard)
-                    hbox(spacing = 64.0) {
+                    hbox(spacing = 64.0 / coefDisplay) {
                         alignmentProperty().set(Pos.CENTER)
-                        button("Выбрать все опыты:") {
+                        buttonSelectAll = button("Выбрать все опыты:") {
                             action {
                                 checkBoxTest1.isSelected = true
                                 checkBoxTest2.isSelected = true
@@ -141,21 +144,33 @@ class MainView : View("Комплексный стенд проверки эле
                             }
                         }
                     }.addClass(Styles.extraHard)
-                    hbox(spacing = 16.0) {
+                    hbox(spacing = 16.0 / coefDisplay) {
                         alignmentProperty().set(Pos.CENTER)
-                        vbox(spacing = 16.0) {
+                        vbox(spacing = 16.0 / coefDisplay) {
                             alignmentProperty().set(Pos.CENTER_LEFT)
+                            checkBoxTest2 = checkbox("1. Сопротивление изоляции") {}.addClass(Styles.extraHard)
+                            tableview(controller.tableValuesTest2) {
+                                minHeight = 146.0 / coefDisplay
+                                maxHeight = 146.0 / coefDisplay
+                                minWidth = 900.0 / coefDisplay
+                                prefWidth = 900.0 / coefDisplay
+                                columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
+                                mouseTransparentProperty().set(true)
+                                column("", TableValuesTest2::descriptor.getter)
+                                column("Сопротивление, МОм", TableValuesTest2::resistanceR.getter)
+                                column("Результат", TableValuesTest2::result.getter)
+                            }
                             checkBoxTest1 =
-                                checkbox("1. Сопротивление обмоток постоянному току") {
+                                checkbox("2. Сопротивление обмоток постоянному току") {
                                     selectedProperty().onChange {
                                         value3.value = it && value2.value
                                     }
                                 }.apply { bind(value1) }.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest1) {
-                                minHeight = 146.0
-                                maxHeight = 146.0
-                                minWidth = 900.0
-                                prefWidth = 900.0
+                                minHeight = 146.0 / coefDisplay
+                                maxHeight = 146.0 / coefDisplay
+                                minWidth = 900.0 / coefDisplay
+                                prefWidth = 900.0 / coefDisplay
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
                                 column("", TableValuesTest1::descriptor.getter)
@@ -164,49 +179,17 @@ class MainView : View("Комплексный стенд проверки эле
                                 column("CA, Ом", TableValuesTest1::resistanceCA.getter)
                                 column("Результат", TableValuesTest1::result.getter)
                             }
-
-                            checkBoxTest2 = checkbox("2. Сопротивление изоляции") {}.addClass(Styles.extraHard)
-
-                            tableview(controller.tableValuesTest2) {
-                                minHeight = 146.0
-                                maxHeight = 146.0
-                                minWidth = 900.0
-                                prefWidth = 900.0
-                                columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
-                                mouseTransparentProperty().set(true)
-                                column("", TableValuesTest2::descriptor.getter)
-                                column("Сопротивление, МОм", TableValuesTest2::resistanceR.getter)
-                                column("Результат", TableValuesTest2::result.getter)
-                            }
-
-                            checkBoxTest3 =
-                                checkbox("3. Электрическая прочность изоляции") { }.addClass(Styles.extraHard)
-                            tableview(controller.tableValuesTest3) {
-                                minHeight = 146.0
-                                maxHeight = 146.0
-                                minWidth = 900.0
-                                prefWidth = 900.0
-                                columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
-                                mouseTransparentProperty().set(true)
-                                column("", TableValuesTest3::descriptor.getter)
-                                column("U, В", TableValuesTest3::voltage.getter)
-                                column("I, мА", TableValuesTest3::current.getter)
-                                column("Результат", TableValuesTest3::result.getter)
-                            }
-                        }
-                        vbox(spacing = 16.0) {
-                            alignmentProperty().set(Pos.CENTER_LEFT)
                             checkBoxTest4 =
-                                checkbox("4. Межвитковые замыкания, обрывы") {
+                                checkbox("3. Межвитковые замыкания, обрывы") {
                                     selectedProperty().onChange {
                                         value3.value = it && value1.value
                                     }
                                 }.apply { bind(value2) }.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest4) {
-                                minHeight = 146.0
-                                maxHeight = 146.0
-                                minWidth = 900.0
-                                prefWidth = 900.0
+                                minHeight = 146.0 / coefDisplay
+                                maxHeight = 146.0 / coefDisplay
+                                minWidth = 900.0 / coefDisplay
+                                prefWidth = 900.0 / coefDisplay
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
                                 column("", TableValuesTest4::descriptor.getter)
@@ -215,7 +198,24 @@ class MainView : View("Комплексный стенд проверки эле
                                 column("CA, мH", TableValuesTest4::resistanceInductiveCA.getter)
                                 column("Результат", TableValuesTest4::result.getter)
                             }
+                        }
+                        vbox(spacing = 16.0) {
+                            alignmentProperty().set(Pos.CENTER_LEFT)
 
+                            checkBoxTest3 =
+                                checkbox("4. Электрическая прочность изоляции") { }.addClass(Styles.extraHard)
+                            tableview(controller.tableValuesTest3) {
+                                minHeight = 146.0 / coefDisplay
+                                maxHeight = 146.0 / coefDisplay
+                                minWidth = 900.0 / coefDisplay
+                                prefWidth = 900.0 / coefDisplay
+                                columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
+                                mouseTransparentProperty().set(true)
+                                column("", TableValuesTest3::descriptor.getter)
+                                column("U, В", TableValuesTest3::voltage.getter)
+                                column("I, мА", TableValuesTest3::current.getter)
+                                column("Результат", TableValuesTest3::result.getter)
+                            }
                             checkBoxTest5 =
                                 checkbox("5. Правильность соединения обмоток") {
                                     setOnMouseClicked {
@@ -235,10 +235,10 @@ class MainView : View("Комплексный стенд проверки эле
                                     }
                                 }.apply { bind(value3) }.addClass(Styles.extraHard)
                             tableview(controller.tableValuesTest5) {
-                                minHeight = 146.0
-                                maxHeight = 146.0
-                                minWidth = 900.0
-                                prefWidth = 900.0
+                                minHeight = 146.0 / coefDisplay
+                                maxHeight = 146.0 / coefDisplay
+                                minWidth = 900.0 / coefDisplay
+                                prefWidth = 900.0 / coefDisplay
                                 columnResizePolicy = TableView.CONSTRAINED_RESIZE_POLICY
                                 mouseTransparentProperty().set(true)
                                 column("", TableValuesTest5::descriptor.getter)
@@ -254,11 +254,11 @@ class MainView : View("Комплексный стенд проверки эле
                                         topAnchor = 0.0
                                         bottomAnchor = 0.0
                                     }
-                                    minHeight = 209.0
-                                    maxHeight = 209.0
-                                    prefHeight = 209.0
-                                    minWidth = 900.0
-                                    prefWidth = 900.0
+                                    minHeight = 209.0 / coefDisplay
+                                    maxHeight = 209.0 / coefDisplay
+                                    prefHeight = 209.0 / coefDisplay
+                                    minWidth = 900.0 / coefDisplay
+                                    prefWidth = 900.0 / coefDisplay
                                     vBoxLog = vbox {
                                     }.addClass(megaHard)
 
@@ -270,15 +270,15 @@ class MainView : View("Комплексный стенд проверки эле
                     hbox(spacing = 16) {
                         alignment = Pos.CENTER
                         buttonStart = button("Запустить") {
-                            prefWidth = 640.0
-                            prefHeight = 128.0
+                            prefWidth = 640.0 / coefDisplay
+                            prefHeight = 128.0 / coefDisplay
                             action {
                                 controller.handleStartTest()
                             }
                         }.addClass(Styles.extraHard)
                         buttonStop = button("Остановить") {
-                            prefWidth = 640.0
-                            prefHeight = 128.0
+                            prefWidth = 640.0 / coefDisplay
+                            prefHeight = 128.0 / coefDisplay
                             action {
                                 controller.handleStopTest()
                             }

@@ -97,6 +97,9 @@ class Test4Controller : TestController() {
             if (mainView.textFieldPlatform.text == "Платформа 2" && !platform2) {
                 controller.cause = "Не закрыта крышка платформы 2"
             }
+            if (platform1 && platform2) {
+                controller.cause = "Ошибка в работе концевиков"
+            }
         }
     }
 
@@ -207,9 +210,9 @@ class Test4Controller : TestController() {
             }
         }
 
-        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
-            owenPR.onAPPA()
-        }
+//        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
+//            owenPR.onAPPA()
+//        }
 
         setResult()
 
@@ -223,13 +226,13 @@ class Test4Controller : TestController() {
                 owenPR.onAPPA()
                 sleepWhile(10)
                 appa.getMode()
-                sleepWhile(4)
+                sleepWhile(1)
             }
             while (appa.getMode() != L_MODE && appa.isResponding && controller.isExperimentRunning) {
                 owenPR.changeModeAPPA()
-                sleepWhile(4)
+                sleepWhile(1)
             }
-            sleepWhile(4)
+            sleepWhile(1)
         }
     }
 
@@ -315,8 +318,6 @@ class Test4Controller : TestController() {
     private fun finalizeExperiment() {
         isExperimentEnded = true
 
-        owenPR.onKM33()
-        sleep(2000)
         owenPR.offAllKMs()
         CommunicationModel.clearPollingRegisters()
     }

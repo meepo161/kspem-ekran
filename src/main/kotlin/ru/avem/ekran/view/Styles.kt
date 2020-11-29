@@ -80,8 +80,8 @@ class Styles : Stylesheet() {
         }
 
         extraHard {
-            fontSize = 32.px
-            fontWeight = FontWeight.EXTRA_BOLD
+            fontSize = 24.px
+            fontWeight = FontWeight.BOLD
         }
 
         stopStart {
@@ -127,12 +127,12 @@ class Styles : Stylesheet() {
 
         tableColumn {
             alignment = Pos.CENTER
-            fontWeight = FontWeight.EXTRA_BOLD
-            fontSize = 22.px
+            fontWeight = FontWeight.BOLD
+            fontSize = 22.px / 1.6
         }
 
         tableRowCell {
-            cellSize = 50.px
+            cellSize = 50.px / 1.5
         }
 
         checkBox {

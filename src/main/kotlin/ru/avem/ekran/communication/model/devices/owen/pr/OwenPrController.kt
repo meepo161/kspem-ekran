@@ -105,24 +105,28 @@ class OwenPrController(
         val nor = bitPosition - 1
         outMask = outMask or 2.0.pow(nor).toInt().toShort()
         writeRegister(register, outMask)
+        sleep(1000)
     }
 
     private fun onBitInRegister2(register: DeviceRegister, bitPosition: Short) {
         val nor = bitPosition - 1
         outMask2 = outMask2 or 2.0.pow(nor).toInt().toShort()
         writeRegister(register, outMask2)
+        sleep(1000)
     }
 
     private fun offBitInRegister(register: DeviceRegister, bitPosition: Short) {
         val nor = bitPosition - 1
         outMask = outMask and 2.0.pow(nor).toInt().inv().toShort()
         writeRegister(register, outMask)
+        sleep(1000)
     }
 
     private fun offBitInRegister2(register: DeviceRegister, bitPosition: Short) {
         val nor = bitPosition - 1
         outMask2 = outMask2 and 2.0.pow(nor).toInt().inv().toShort()
         writeRegister(register, outMask2)
+        sleep(1000)
     }
 
 

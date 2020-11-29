@@ -104,7 +104,6 @@ class Test4Controller : TestController() {
         controller.cause = ""
         testItemL = Singleton.currentTestItem.xL.toDouble()
 
-        controller.isExperimentRunning = true
         isExperimentEnded = false
 
         if (controller.isExperimentRunning) {
@@ -220,17 +219,17 @@ class Test4Controller : TestController() {
     private fun prepareAPPAForMeasureL() {
         var attempts = 10
         while (--attempts > 0 && controller.isExperimentRunning && (!appa.isResponding || appa.getMode() != L_MODE)) {
-            while (!appa.isResponding) {
+            while (!appa.isResponding && controller.isExperimentRunning) {
                 owenPR.onAPPA()
-                sleepWhile(6)
+                sleepWhile(10)
                 appa.getMode()
-                sleepWhile(2)
+                sleepWhile(4)
             }
-            while (appa.getMode() != L_MODE && appa.isResponding) {
+            while (appa.getMode() != L_MODE && appa.isResponding && controller.isExperimentRunning) {
                 owenPR.changeModeAPPA()
-                sleepWhile(2)
+                sleepWhile(4)
             }
-            sleepWhile(2)
+            sleepWhile(4)
         }
     }
 
@@ -314,7 +313,6 @@ class Test4Controller : TestController() {
     }
 
     private fun finalizeExperiment() {
-        controller.isExperimentRunning = false
         isExperimentEnded = true
 
         owenPR.onKM33()

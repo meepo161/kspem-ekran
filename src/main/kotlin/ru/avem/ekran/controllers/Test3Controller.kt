@@ -122,7 +122,6 @@ class Test3Controller : TestController() {
             controller.tableValuesTest3[1].result.value = ""
         }
 
-        controller.isExperimentRunning = true
         isExperimentEnded = false
 
         if (controller.isExperimentRunning) {
@@ -232,7 +231,6 @@ class Test3Controller : TestController() {
     }
 
     private fun finalizeExperiment() {
-        controller.isExperimentRunning = false
         isExperimentEnded = true
         isDeltaNeed = false
 

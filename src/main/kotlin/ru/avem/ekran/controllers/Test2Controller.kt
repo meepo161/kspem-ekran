@@ -102,7 +102,6 @@ class Test2Controller : TestController() {
             controller.tableValuesTest2[1].result.value = ""
         }
 
-        controller.isExperimentRunning = true
         isExperimentEnded = false
 
         if (controller.isExperimentRunning) {
@@ -202,7 +201,6 @@ class Test2Controller : TestController() {
     }
 
     private fun finalizeExperiment() {
-        controller.isExperimentRunning = false
         owenPR.offAllKMs()
         CommunicationModel.clearPollingRegisters()
         isExperimentEnded = true

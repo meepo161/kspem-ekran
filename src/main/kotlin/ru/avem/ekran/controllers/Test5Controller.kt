@@ -71,7 +71,6 @@ class Test5Controller : TestController() {
 
     fun startTest() {
         controller.cause = ""
-        controller.isExperimentRunning = true
         isExperimentEnded = false
         runLater {
             controller.tableValuesTest5[1].resistanceR.value = ""
@@ -111,7 +110,6 @@ class Test5Controller : TestController() {
     }
 
     private fun finalizeExperiment() {
-        controller.isExperimentRunning = false
         isExperimentEnded = true
 
     }

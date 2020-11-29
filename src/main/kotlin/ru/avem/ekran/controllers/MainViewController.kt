@@ -107,8 +107,10 @@ class MainViewController : TestController() {
 
     var cause: String = ""
         set(value) {
-            isExperimentRunning = false
-            isStopped = true
+            if (value != "") {
+                isExperimentRunning = false
+                isStopped = true
+            }
             field = value
         }
 
@@ -225,38 +227,38 @@ class MainViewController : TestController() {
                 }.toList().observable()
             }.first()
             thread(isDaemon = true) {
-                isStopped = false
                 runLater {
                     view.buttonStart.isDisable = true
                     view.buttonStop.isDisable = false
                 }
                 clearTable()
                 CommunicationModel.clearPollingRegisters()
+                isExperimentRunning = true
                 if (view.checkBoxTest1.isSelected) {
                     isDevicesResponding = {
                         owenPR.isResponding
                     }
                     Test1Controller().startTest()
                 }
-                if (view.checkBoxTest2.isSelected) {
+                if (view.checkBoxTest2.isSelected && isExperimentRunning) {
                     isDevicesResponding = {
                         owenPR.isResponding
                     }
                     Test2Controller().startTest()
                 }
-                if (view.checkBoxTest3.isSelected) {
+                if (view.checkBoxTest3.isSelected && isExperimentRunning) {
                     isDevicesResponding = {
                         owenPR.isResponding || deltaCP.isResponding || avem4.isResponding || avem7.isResponding
                     }
                     Test3Controller().startTest()
                 }
-                if (view.checkBoxTest4.isSelected) {
+                if (view.checkBoxTest4.isSelected && isExperimentRunning) {
                     isDevicesResponding = {
                         owenPR.isResponding
                     }
                     Test4Controller().startTest()
                 }
-                if (view.checkBoxTest5.isSelected) {
+                if (view.checkBoxTest5.isSelected && isExperimentRunning) {
                     isDevicesResponding = {
                         owenPR.isResponding
                     }
@@ -264,6 +266,7 @@ class MainViewController : TestController() {
                 }
 
                 appendMessageToLog(LogTag.MESSAGE, "Испытания завершены")
+                isExperimentRunning = false
                 startPollDevices()
                 runLater {
                     view.buttonStart.isDisable = false

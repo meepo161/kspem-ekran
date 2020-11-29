@@ -105,14 +105,7 @@ class Test1Controller : TestController() {
     fun startTest() {
         controller.cause = ""
         testItemR = currentTestItem.xR.toDouble()
-        Platform.runLater {
-            controller.tableValuesTest1[1].resistanceAB.value = ""
-            controller.tableValuesTest1[1].resistanceBC.value = ""
-            controller.tableValuesTest1[1].resistanceCA.value = ""
-            controller.tableValuesTest1[1].result.value = ""
-        }
 
-        controller.isExperimentRunning = true
         isExperimentEnded = false
 
         if (controller.isExperimentRunning) {
@@ -230,17 +223,17 @@ class Test1Controller : TestController() {
     private fun prepareAPPAForMeasureR() {
         var attempts = 10
         while (--attempts > 0 && controller.isExperimentRunning && (!appa.isResponding || appa.getMode() != R_MODE)) {
-            while (!appa.isResponding) {
+            while (!appa.isResponding && controller.isExperimentRunning) {
                 owenPR.onAPPA()
-                sleepWhile(6)
+                sleepWhile(10)
                 appa.getMode()
-                sleepWhile(2)
+                sleepWhile(4)
             }
-            while (appa.getMode() != R_MODE && appa.isResponding) {
+            while (appa.getMode() != R_MODE && appa.isResponding && controller.isExperimentRunning) {
                 owenPR.changeModeAPPA()
-                sleepWhile(2)
+                sleepWhile(4)
             }
-            sleepWhile(2)
+            sleepWhile(4)
         }
     }
 
@@ -324,7 +317,6 @@ class Test1Controller : TestController() {
     }
 
     private fun finalizeExperiment() {
-        controller.isExperimentRunning = false
         isExperimentEnded = true
         owenPR.offAllKMs()
         CommunicationModel.clearPollingRegisters()

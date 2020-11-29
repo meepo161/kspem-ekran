@@ -49,6 +49,7 @@ object CommunicationModel {
     }
 
     private val connectionBRIS = Connection(
+        //        adapterName = "USB2.0-Ser!",
         adapterName = "CP2102 USB to UART Bridge Controller-2",
         serialParameters = SerialParameters(8, 0, 1, 9600),
         timeoutRead = 25,
@@ -63,7 +64,6 @@ object CommunicationModel {
     private val brisAdapter = SerialAdapter(connectionBRIS)
 
     private val deviceControllers: Map<DeviceID, IDeviceController> = mapOf(
-
         DeviceID.DD2 to OwenPrController(DeviceID.DD2.toString(), modbusAdapter, 2),
         DeviceID.PV21 to Avem7Controller(DeviceID.PV21.toString(), modbusAdapter, 21),
         DeviceID.PV24 to Avem4Controller(DeviceID.PV24.toString(), modbusAdapter, 24),

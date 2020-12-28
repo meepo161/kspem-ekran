@@ -21,8 +21,8 @@ interface IDeviceController {
 
     }
 
-    fun readRequest(request: String): Int {
-        return 0
+    fun readRequest(request: String): String {
+        return ""
     }
 
     fun <T : Number> writeRegister(register: DeviceRegister, value: T) {

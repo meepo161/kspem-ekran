@@ -66,7 +66,8 @@ fun ByteArray.toHexString(numBytesRead: Int = this.size): String {
 fun TextField.callKeyBoard() {
     onTouchPressed = EventHandler {
         Desktop.getDesktop()
-            .open(Paths.get("C:/Program Files/Common Files/Microsoft Shared/ink/TabTip.exe").toFile())
+            .open(Paths.get("C:/WINDOWS/system32/osk.exe").toFile())
+//            .open(Paths.get("C:/Program Files/Common Files/Microsoft Shared/ink/TabTip.exe").toFile())
         requestFocus()
     }
 }
@@ -181,5 +182,5 @@ fun String?.toIntOrNullByFormatter() = when {
 
 fun callKeyBoard() {
     Desktop.getDesktop()
-        .open(Paths.get("C:/Program Files/Common Files/Microsoft Shared/ink/TabTip.exe").toFile())
+        .open(Paths.get("C:/WINDOWS/system32/osk.exe").toFile())
 }

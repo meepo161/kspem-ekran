@@ -1,5 +1,6 @@
 package ru.avem.ekran.view
 
+import javafx.event.EventHandler
 import javafx.geometry.Pos
 import javafx.scene.control.ButtonType
 import javafx.scene.control.TableView
@@ -39,7 +40,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
             hbox(spacing = 16.0) {
                 tableViewObjects = tableview {
                     columnResizePolicyProperty().set(TableView.CONSTRAINED_RESIZE_POLICY)
-                    prefWidth = 1000.0
+                    prefWidth = 940.0
                     prefHeight = 600.0
 
                     enableDirtyTracking()
@@ -118,7 +119,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                             label("Тип объекта")
                             textfieldType = textfield {
                                 prefWidth = 300.0
-                                    callKeyBoard()
+                                callKeyBoard()
                             }
                         }
                     }
@@ -128,7 +129,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                             label("XR постоянному току, Ом")
                             textfieldXR = textfield {
                                 prefWidth = 300.0
-                                    callKeyBoard()
+                                callKeyBoard()
                             }
                         }
                     }
@@ -138,7 +139,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                             label("R изоляции, МОм")
                             textfieldXIsolation = textfield {
                                 prefWidth = 300.0
-                                    callKeyBoard()
+                                callKeyBoard()
                             }
                         }
                     }
@@ -148,7 +149,7 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                             label("XL индуктивности, мН")
                             textfieldXL = textfield {
                                 prefWidth = 300.0
-                                    callKeyBoard()
+                                callKeyBoard()
                             }
                         }
                     }
@@ -188,6 +189,15 @@ class ObjectTypeEditorWindow : View("Редактор объектов") {
                                     tableViewObjects.items = controller.getObjects()
                                     mainController.refreshObjectsTypes()
                                 }
+                            }
+                        }
+                    }
+
+                    hbox(spacing = 16.0) {
+                        alignment = Pos.CENTER
+                        button("Вызвать клавиатуру") {
+                            action {
+                                callKeyBoard()
                             }
                         }
                     }

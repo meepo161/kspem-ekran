@@ -147,6 +147,7 @@ class MainViewController : TestController() {
                 1.toShort()
             )
             owenPR.initOwenPR()
+            owenPR.offAllKMs()
             owenPR.resetKMS()
 
             thread(isDaemon = true) {
@@ -208,7 +209,7 @@ class MainViewController : TestController() {
                         }
                         else -> {
                             view.textFieldPlatform.addClass(Styles.redText)
-                            view.textFieldPlatform.text = "Закройте крышку платформы"
+                            view.textFieldPlatform.text = "Закройте защитный экран"
                         }
                     }
                 }
@@ -225,7 +226,12 @@ class MainViewController : TestController() {
             runLater {
                 Toast.makeText("Выберите хотя бы одно испытание из списка").show(Toast.ToastType.WARNING)
             }
+        } else if (view.textFieldPlatform.text == "Ошибка концевиков" || view.textFieldPlatform.text == "Закройте защитный экран" || view.textFieldPlatform.text == "") {
+            runLater {
+                Toast.makeText("Убедитесь, что защитный экран расположен верно").show(Toast.ToastType.WARNING)
+            }
         } else {
+            view.buttonStart.isDisable = true  // todo точно не нужен runLater?
             Singleton.currentTestItem = transaction {
                 TestObjectsType.find {
                     ObjectsTypes.id eq view.comboBoxTestItem.selectedItem!!.id
@@ -233,7 +239,6 @@ class MainViewController : TestController() {
             }.first()
             thread(isDaemon = true) {
                 runLater {
-                    view.buttonStart.isDisable = true
                     view.buttonStop.isDisable = false
                     view.mainMenubar.isDisable = true
                     view.comboBoxTestItem.isDisable = true
@@ -288,7 +293,7 @@ class MainViewController : TestController() {
                     Test5Controller().startTest()
                 }
 
-                appendMessageToLog(LogTag.MESSAGE, "Испытания завершены")
+                appendMessageToLog(LogTag.DEBUG, "Испытания завершены")
                 isExperimentRunning = false
                 startPollDevices()
                 runLater {

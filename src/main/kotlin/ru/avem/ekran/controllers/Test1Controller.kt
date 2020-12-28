@@ -214,6 +214,8 @@ class Test1Controller : TestController() {
             }
         }
 
+//        appa.protocolAdapter.connection.disconnect()
+//        sleep(5000)
 //        if (controller.isExperimentRunning && controller.isDevicesResponding()) {
 //            owenPR.onAPPA()
 //        }
@@ -250,7 +252,7 @@ class Test1Controller : TestController() {
     private fun setResult() {
         if (!controller.isDevicesResponding()) {
             controller.tableValuesTest1[1].result.value = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \nпотеряна связь с устройствами")
         } else if (controller.cause.isNotEmpty()) {
             controller.tableValuesTest1[1].result.value = "Прервано"
             appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
@@ -260,58 +262,58 @@ class Test1Controller : TestController() {
         ) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Сопротивления отличаются более, чем на 20%"
+                LogTag.ERROR, "Результат: \nСопротивления отличаются \nболее, чем на 20%"
             )
         } else if ((measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2)
             && (measuringR2 < testItemR * 0.8 || measuringR2 > testItemR * 1.2)
         ) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Сопротивления AB и BC отличаются более, чем на 20%"
+                LogTag.ERROR, "Результат: \nСопротивления AB и BC отличаются \nболее, чем на 20%"
             )
         } else if ((measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2)
             && (measuringR3 < testItemR * 0.8 || measuringR3 > testItemR * 1.2)
         ) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Сопротивления AB и BC отличаются более, чем на 20%"
+                LogTag.ERROR, "Результат: \nСопротивления AB и BC отличаются \nболее, чем на 20%"
             )
         } else if ((measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2)
             && (measuringR2 < testItemR * 0.8 || measuringR2 > testItemR * 1.2)
         ) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Сопротивления AB и CA отличаются более, чем на 20%"
+                LogTag.ERROR, "Результат: \nСопротивления AB и CA отличаются \nболее, чем на 20%"
             )
         } else if (measuringR1 < testItemR * 0.8 || measuringR1 > testItemR * 1.2) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Сопротивление обмотки AB отличается более, чем на 20%"
+                LogTag.ERROR, "Результат: \nСопротивление обмотки AB отличается \nболее, чем на 20%"
             )
         } else if (measuringR2 < testItemR * 0.8 || measuringR2 > testItemR * 1.2) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Сопротивление обмотки BC отличается более, чем на 20%"
+                LogTag.ERROR, "Результат: \nСопротивление обмотки BC отличается \nболее, чем на 20%"
             )
         } else if (measuringR3 < testItemR * 0.8 || measuringR3 > testItemR * 1.2) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Сопротивление обмотки CA отличается более, чем на 20%"
+                LogTag.ERROR, "Результат: \nСопротивление обмотки CA отличается \nболее, чем на 20%"
             )
         } else if (measuringR1 == -2.0) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Обрыв обмотки AB"
+                LogTag.ERROR, "Результат: \nОбрыв обмотки AB"
             )
         } else if (measuringR2 == -2.0) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Обрыв обмотки BC"
+                LogTag.ERROR, "Результат: \nОбрыв обмотки BC"
             )
         } else if (measuringR3 == -2.0) {
             controller.tableValuesTest1[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Обрыв обмотки CA"
+                LogTag.ERROR, "Результат: \nОбрыв обмотки CA"
             )
         } else {
             controller.tableValuesTest1[1].result.value = "Годен"

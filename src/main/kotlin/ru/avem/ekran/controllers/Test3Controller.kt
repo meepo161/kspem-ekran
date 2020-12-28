@@ -216,16 +216,16 @@ class Test3Controller : TestController() {
         runLater {
             if (!controller.isDevicesResponding()) {
                 controller.tableValuesTest3[1].result.value = "Прервано"
-                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \nпотеряна связь с устройствами")
             } else if (!deltaCP.isResponding) {
                 controller.tableValuesTest3[1].result.value = "Прервано"
-                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: нет связи с ЧП")
+                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \nнет связи с ЧП")
             } else if (controller.cause.isNotEmpty()) {
                 controller.tableValuesTest3[1].result.value = "Не годен"
-                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
+                appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \n${controller.cause}")
             } else if (currentVIU) {
                 controller.tableValuesTest3[1].result.value = "Не годен"
-                appendMessageToLog(LogTag.ERROR, "Испытание неупешно по причине: пробой изоляции")
+                appendMessageToLog(LogTag.ERROR, "Испытание неупешно по причине: \nпробой изоляции")
             } else {
                 controller.tableValuesTest3[1].result.value = "Годен"
                 appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")

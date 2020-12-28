@@ -120,7 +120,7 @@ class MainView : View("Комплексный стенд проверки эле
                         alignmentProperty().set(Pos.CENTER)
                         label("Тип двигателя:") {}.addClass(Styles.extraHard)
                         comboBoxTestItem = combobox {
-                            prefWidth = 320.0
+                            prefWidth = 400.0
                             setOnAction {
                                 controller.initTable()
                             }
@@ -129,12 +129,13 @@ class MainView : View("Комплексный стенд проверки эле
                         label("Место:").addClass(Styles.extraHard)
                         textFieldPlatform = textfield {
                             text = ""
-                            prefWidth = 320.0
+                            prefWidth = 400.0
+                            alignment = Pos.CENTER
                         }.addClass(Styles.extraHard)
                     }.addClass(Styles.extraHard)
                     hbox(spacing = 64.0 / coefDisplay) {
                         alignmentProperty().set(Pos.CENTER)
-                        buttonSelectAll = button("Выбрать все опыты:") {
+                        buttonSelectAll = button("Выбрать все опыты") {
                             action {
                                 checkBoxTest1.isSelected = true
                                 checkBoxTest2.isSelected = true

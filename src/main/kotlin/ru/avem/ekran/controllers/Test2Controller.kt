@@ -184,19 +184,19 @@ class Test2Controller : TestController() {
     private fun setResult() {
         if (!controller.isDevicesResponding()) {
             controller.tableValuesTest2[1].result.value = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами RS-485")
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \nпотеряна связь с устройствами RS-485")
         } else if (controller.cause.isNotEmpty()) {
             controller.tableValuesTest2[1].result.value = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \n${controller.cause}")
         } else if (!bris.isResponding) {
             controller.tableValuesTest2[1].result.value = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройством БРИС")
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \nпотеряна связь с устройством БРИС")
         } else if (measuringR == BREAK.toDouble()) {
             controller.tableValuesTest2[1].result.value = "Не годен"
             appendMessageToLog(LogTag.ERROR, "Испытание неуспешно по причине: Обрыв")
         } else if (measuringR < testItemR) {
             controller.tableValuesTest1[1].result.value = "Не годен"
-            appendMessageToLog(LogTag.ERROR, "Результат: Сопротивление меньше, чем заданное")
+            appendMessageToLog(LogTag.ERROR, "Результат: \nСопротивление меньше, чем заданное")
         } else {
             controller.tableValuesTest2[1].result.value = "Годен"
             appendMessageToLog(LogTag.MESSAGE, "Испытание завершено успешно")

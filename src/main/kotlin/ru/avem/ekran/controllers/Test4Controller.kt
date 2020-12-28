@@ -246,68 +246,68 @@ class Test4Controller : TestController() {
     private fun setResult() {
         if (!controller.isDevicesResponding()) {
             controller.tableValuesTest4[1].result.value = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: потеряна связь с устройствами")
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \nпотеряна связь с устройствами")
         } else if (controller.cause.isNotEmpty()) {
             controller.tableValuesTest4[1].result.value = "Прервано"
-            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: ${controller.cause}")
+            appendMessageToLog(LogTag.ERROR, "Испытание прервано по причине: \n${controller.cause}")
         } else if ((measuringL1 < testItemL * 0.8 || measuringL1 > testItemL * 1.2)
             && (measuringL2 < testItemL * 0.8 || measuringL2 > testItemL * 1.2)
             && (measuringL3 < testItemL * 0.8 || measuringL3 > testItemL * 1.2)
         ) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Индуктивности отличаются более, чем на 20%"
+                LogTag.ERROR, "Результат: \nИндуктивности отличаются \nболее, чем на 20%"
             )
         } else if ((measuringL1 < testItemL * 0.8 || measuringL1 > testItemL * 1.2)
             && (measuringL2 < testItemL * 0.8 || measuringL2 > testItemL * 1.2)
         ) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Индуктивности AB и BC отличаются более, чем на 20%"
+                LogTag.ERROR, "Результат: \nИндуктивности AB и BC отличаются \nболее, чем на 20%"
             )
         } else if ((measuringL1 < testItemL * 0.8 || measuringL1 > testItemL * 1.2)
             && (measuringL3 < testItemL * 0.8 || measuringL3 > testItemL * 1.2)
         ) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Индуктивности AB и BC отличаются более, чем на 20%"
+                LogTag.ERROR, "Результат: \nИндуктивности AB и BC отличаются \nболее, чем на 20%"
             )
         } else if ((measuringL1 < testItemL * 0.8 || measuringL1 > testItemL * 1.2)
             && (measuringL2 < testItemL * 0.8 || measuringL2 > testItemL * 1.2)
         ) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Индуктивности отличаются более, чем на 20%"
+                LogTag.ERROR, "Результат: \nИндуктивности отличаются \nболее, чем на 20%"
             )
         } else if (measuringL1 < testItemL * 0.8 || measuringL1 > testItemL * 1.2) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Индуктивность обмотки AB отличается более, чем на 20%"
+                LogTag.ERROR, "Результат: \nИндуктивность обмотки AB отличается \nболее, чем на 20%"
             )
         } else if (measuringL2 < testItemL * 0.8 || measuringL2 > testItemL * 1.2) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Индуктивность обмотки BC отличается более, чем на 20%"
+                LogTag.ERROR, "Результат: \nИндуктивность обмотки BC отличается \nболее, чем на 20%"
             )
         } else if (measuringL3 < testItemL * 0.8 || measuringL3 > testItemL * 1.2) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Индуктивность обмотки CA отличается более, чем на 20%"
+                LogTag.ERROR, "Результат: \nИндуктивность обмотки CA отличается \nболее, чем на 20%"
             )
         } else if (measuringL1 == -2.0) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Обрыв обмотки AB"
+                LogTag.ERROR, "Результат: \nОбрыв обмотки AB"
             )
         } else if (measuringL2 == -2.0) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Обрыв обмотки BC"
+                LogTag.ERROR, "Результат: \nОбрыв обмотки BC"
             )
         } else if (measuringL3 == -2.0) {
             controller.tableValuesTest4[1].result.value = "Не годен"
             appendMessageToLog(
-                LogTag.ERROR, "Результат: Обрыв обмотки CA"
+                LogTag.ERROR, "Результат: \nОбрыв обмотки CA"
             )
         } else {
             controller.tableValuesTest4[1].result.value = "Годен"

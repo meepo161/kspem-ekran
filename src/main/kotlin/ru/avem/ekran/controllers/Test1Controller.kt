@@ -3,6 +3,7 @@ package ru.avem.ekran.controllers
 import javafx.application.Platform
 import javafx.scene.text.Text
 import ru.avem.ekran.communication.model.CommunicationModel
+import ru.avem.ekran.communication.model.devices.ohmmeter.APPAController.Companion.DCR_MODE
 import ru.avem.ekran.communication.model.devices.ohmmeter.APPAController.Companion.R_MODE
 import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrModel
 import ru.avem.ekran.utils.LogTag
@@ -153,7 +154,7 @@ class Test1Controller : TestController() {
 
             appa.getMode()
             sleepWhile(6)
-            prepareAPPAForMeasureR()
+            prepareAPPAForMeasureDCR()
 
             if (mainView.textFieldPlatform.text == "Платформа 1") {
                 owenPR.onKM11()
@@ -170,7 +171,8 @@ class Test1Controller : TestController() {
         }
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
-            prepareAPPAForMeasureR()
+            prepareAPPAForMeasureDCR()
+            sleepWhile(4)
             measuringR1 = formatRealNumber(appa.getDCR().toDouble())
             if (measuringR1 == -2.0) {
                 controller.tableValuesTest1[1].resistanceAB.value = "Обрыв"
@@ -188,7 +190,8 @@ class Test1Controller : TestController() {
         }
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
-            prepareAPPAForMeasureR()
+            prepareAPPAForMeasureDCR()
+            sleepWhile(4)
             measuringR2 = formatRealNumber(appa.getDCR().toDouble())
             if (measuringR2 == -2.0) {
                 controller.tableValuesTest1[1].resistanceBC.value = "Обрыв"
@@ -205,7 +208,8 @@ class Test1Controller : TestController() {
             sleepWhile(6)
         }
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
-            prepareAPPAForMeasureR()
+            prepareAPPAForMeasureDCR()
+            sleepWhile(4)
             measuringR3 = formatRealNumber(appa.getDCR().toDouble())
             if (measuringR3 == -2.0) {
                 controller.tableValuesTest1[1].resistanceCA.value = "Обрыв"
@@ -225,16 +229,16 @@ class Test1Controller : TestController() {
         finalizeExperiment()
     }
 
-    private fun prepareAPPAForMeasureR() {
+    private fun prepareAPPAForMeasureDCR() {
         var attempts = 10
-        while (--attempts > 0 && controller.isExperimentRunning && (!appa.isResponding || appa.getMode() != R_MODE)) {
+        while (--attempts > 0 && controller.isExperimentRunning && (!appa.isResponding || appa.getMode() != DCR_MODE)) {
             while (!appa.isResponding && controller.isExperimentRunning) {
                 owenPR.onAPPA()
                 sleepWhile(10)
                 appa.getMode()
                 sleepWhile(1)
             }
-            while (appa.getMode() != R_MODE && appa.isResponding && controller.isExperimentRunning) {
+            while (appa.getMode() != DCR_MODE && appa.isResponding && controller.isExperimentRunning) {
                 owenPR.changeModeAPPA()
                 sleepWhile(1)
             }

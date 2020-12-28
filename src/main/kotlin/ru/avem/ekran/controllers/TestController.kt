@@ -7,7 +7,6 @@ import ru.avem.ekran.communication.model.devices.avem.avem7.Avem7Controller
 import ru.avem.ekran.communication.model.devices.avem.ikas.Ikas8Controller
 import ru.avem.ekran.communication.model.devices.bris.m4122.M4122Controller
 import ru.avem.ekran.communication.model.devices.delta.DeltaController
-import ru.avem.ekran.communication.model.devices.idc.IDCController
 import ru.avem.ekran.communication.model.devices.ohmmeter.APPAController
 import ru.avem.ekran.communication.model.devices.owen.pr.OwenPrController
 import ru.avem.ekran.communication.model.devices.rele.ReleController

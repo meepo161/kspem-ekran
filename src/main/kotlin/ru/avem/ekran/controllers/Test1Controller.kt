@@ -172,7 +172,7 @@ class Test1Controller : TestController() {
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
             prepareAPPAForMeasureDCR()
-            sleepWhile(4)
+            sleepWhile(12)
             measuringR1 = formatRealNumber(appa.getDCR().toDouble())
             if (measuringR1 == -2.0) {
                 controller.tableValuesTest1[1].resistanceAB.value = "Обрыв"
@@ -191,7 +191,7 @@ class Test1Controller : TestController() {
 
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
             prepareAPPAForMeasureDCR()
-            sleepWhile(4)
+            sleepWhile(12)
             measuringR2 = formatRealNumber(appa.getDCR().toDouble())
             if (measuringR2 == -2.0) {
                 controller.tableValuesTest1[1].resistanceBC.value = "Обрыв"
@@ -209,7 +209,7 @@ class Test1Controller : TestController() {
         }
         if (controller.isExperimentRunning && controller.isDevicesResponding()) {
             prepareAPPAForMeasureDCR()
-            sleepWhile(4)
+            sleepWhile(12)
             measuringR3 = formatRealNumber(appa.getDCR().toDouble())
             if (measuringR3 == -2.0) {
                 controller.tableValuesTest1[1].resistanceCA.value = "Обрыв"
